@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Preinscripción Escolar</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 html,body{height:100%;}
@@ -165,6 +166,30 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .loading-text{font-size:13px;color:#6B7A92;font-weight:500;}
 .toast{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);background:#0D1F35;color:#fff;font-size:13px;font-weight:500;padding:10px 18px;border-radius:10px;z-index:400;opacity:0;transition:opacity 0.3s;white-space:nowrap;pointer-events:none;}
 .toast.show{opacity:1;}
+/* ── ANIMACIONES / FLUIDEZ ── */
+@keyframes screenIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
+@keyframes popIn{from{opacity:0;transform:scale(.96);}to{opacity:1;transform:scale(1);}}
+.screen{animation:screenIn .28s ease;}
+.dir-modal,.edit-modal{animation:popIn .22s ease;}
+.btn-primary,.btn-secondary,.btn-sm,.btn-csv{transition:transform .12s ease,opacity .2s,background .2s;}
+.btn-primary:active:not(:disabled),.btn-secondary:active,.btn-csv:active{transform:scale(.97);}
+.btn-sm:active{transform:scale(.94);}
+.tipo-btn{transition:border-color .15s,background .15s,transform .12s;}
+.tipo-btn:active{transform:scale(.985);}
+.reg-card,.escuela-card{transition:box-shadow .2s ease;}
+.reg-card:hover{box-shadow:0 3px 12px rgba(13,79,140,.08);}
+.progress-step{transition:background .35s ease;}
+.hero-foto,.reg-avatar{transition:transform .15s ease;}
+.hero-foto:hover,.reg-avatar:hover{transform:scale(1.05);}
+/* ── ESTADOS ── */
+.estado-badge{font-size:9.5px;font-weight:700;padding:2px 8px;border-radius:6px;text-transform:uppercase;letter-spacing:.4px;flex-shrink:0;}
+.est-Pendiente{background:#EAF3FF;color:#0D4F8C;}
+.est-Aceptado{background:#F0FFF4;color:#1A7A4A;}
+.est-Rechazado{background:#FFF0F0;color:#C0392B;}
+.banner-aceptado{background:#F0FFF4;border-color:#A8D5B5;}
+.banner-aceptado p{color:#1A5A35;}
+.banner-rechazado{background:#FFF5F5;border-color:#F5C0C0;}
+.banner-rechazado p{color:#8A2A20;}
 </style>
 </head>
 <body>
@@ -292,15 +317,19 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     </div>
     <div class="grid-2">
      <div class="form-group"><label class="form-label">Sexo <span class="req">*</span></label><select class="form-select" id="sexo" onchange="checkSubA()"><option value="">—</option><option>Femenino</option><option>Masculino</option></select></div>
-     <div class="form-group"><label class="form-label">Grado <span class="req">*</span></label><select class="form-select" id="grado" onchange="checkSubA()"><option value="">—</option></select></div>
+     <div class="form-group"><label class="form-label">Tipo inscripción <span class="req">*</span></label>
+      <select class="form-select" id="tipoInscripcion" onchange="onTipoInscripcionChange()">
+       <option value="">—</option>
+       <option>Nuevo ingreso</option>
+       <option>Reinscripción</option>
+       <option>Traslado</option>
+      </select>
+     </div>
     </div>
-    <div class="form-group"><label class="form-label">Tipo de inscripción <span class="req">*</span></label>
-     <select class="form-select" id="tipoInscripcion" onchange="checkSubA()">
-      <option value="">Seleccionar…</option>
-      <option>Nuevo ingreso</option>
-      <option>Reingreso</option>
-      <option>Traslado</option>
-     </select>
+    <div class="form-group">
+     <label class="form-label">Grado a cursar <span class="req">*</span></label>
+     <select class="form-select" id="grado" onchange="checkSubA()"><option value="">—</option></select>
+     <span class="field-hint" id="gradoHint" style="display:none;">Nuevo ingreso entra automáticamente al primer grado/semestre.</span>
     </div>
     <div class="form-group">
      <label class="form-label">CURP <span class="req">*</span></label>
@@ -313,15 +342,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
    <!-- SUB B -->
    <div id="subB" style="display:none;flex-direction:column;gap:12px;">
     <div class="substep-header"><div class="substep-num">B</div><span class="substep-title">Procedencia escolar</span></div>
-    <div class="form-group">
+    <div class="form-group" id="procedenciaSelectWrap">
      <label class="form-label" id="label-procedencia">Escuela de procedencia <span class="req">*</span></label>
      <select class="form-select" id="procedenciaSelect" onchange="onProcedenciaChange()"><option value="">Seleccionar…</option></select>
     </div>
     <div class="form-group" id="procedenciaOtraWrap" style="display:none;">
-     <label class="form-label">Especifica la escuela <span class="req">*</span></label>
+     <label class="form-label" id="label-procedencia-otra">Especifica la escuela <span class="req">*</span></label>
      <input class="form-input" id="procedenciaOtra" type="text" placeholder="Nombre completo de la escuela" oninput="checkSubB()">
     </div>
-    <div class="form-group"><label class="form-label">Promedio de egreso <span class="req">*</span></label><input class="form-input" id="promedio" type="number" min="6" max="10" step="0.1" placeholder="Ej. 8.5" oninput="checkSubB()"><span class="field-hint">Escala 6.0 – 10.0</span></div>
+    <div class="form-group"><label class="form-label" id="label-promedio">Promedio de egreso <span class="req">*</span></label><input class="form-input" id="promedio" type="number" min="6" max="10" step="0.1" placeholder="Ej. 8.5" oninput="checkSubB()"><span class="field-hint">Escala 6.0 – 10.0</span></div>
     <div class="form-group"><label class="form-label">Turno preferido</label><select class="form-select" id="turno"><option value="">Sin preferencia</option><option>Matutino</option><option>Vespertino</option></select></div>
     <div class="btn-row"><button class="btn-secondary" onclick="goSub('A')" style="flex:1;">← Atrás</button><button class="btn-primary" id="btnSubB" onclick="goSub('C')" disabled style="flex:2;">Siguiente →</button></div>
    </div>
@@ -469,6 +498,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
        <div class="stat-card"><div class="stat-num" id="st-hoy">0</div><div class="stat-label">Hoy</div></div>
       </div>
       <button class="btn-csv" onclick="exportarTodos()">⬇ Exportar todos (CSV)</button>
+      <button class="btn-csv" onclick="exportarFotosZip()">🖼 Descargar fotos (ZIP)</button>
       <button class="btn-secondary" onclick="logoutDir()" style="font-size:13px;padding:10px;">Cerrar sesión</button>
      </div>
      <div class="dir-section" id="tab-escuelas">
@@ -492,6 +522,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
        <select class="form-select" id="filtroEscuela" onchange="renderRegistros()"><option value="">Todas las escuelas</option></select>
        <select class="form-select" id="filtroNivel" onchange="renderRegistros()"><option value="">Todos los niveles</option><option>Preparatoria</option><option>Secundaria</option></select>
       </div>
+      <button class="btn-csv" onclick="importarFotos()" style="padding:9px;font-size:12px;">📁 Importar fotos (nombre de archivo = folio)</button>
       <div id="dir-registros-lista" style="display:flex;flex-direction:column;gap:7px;"></div>
      </div>
     </div>
@@ -646,10 +677,7 @@ function seleccionarEscuela(e){
  document.querySelectorAll('#escuelas-lista .tipo-btn').forEach(b=>b.classList.remove('selected'));
  document.getElementById('esc-'+e.id).classList.add('selected');
  document.getElementById('escuelaBtn').disabled=false;
- const gradoEl=document.getElementById('grado');
- gradoEl.innerHTML='<option value="">—</option>';
- const grados=e.nivel==='preparatoria'?['1° Semestre','2° Semestre','3° Semestre','4° Semestre','5° Semestre','6° Semestre']:['1° Grado','2° Grado','3° Grado'];
- grados.forEach(g=>{const o=document.createElement('option');o.textContent=g;gradoEl.appendChild(o);});
+ actualizarGrados();
  const anioEl=document.getElementById('fnacAnio');
  const anioActual=anioEl.value;
  anioEl.innerHTML='<option value="">Año</option>';
@@ -675,8 +703,71 @@ function onProcedenciaChange(){
  checkSubB();
 }
 function getProcedencia(){
+ const tipo=document.getElementById('tipoInscripcion').value;
+ if(tipo==='Reinscripción')return'Mismo plantel (reinscripción)';
+ if(tipo==='Traslado')return document.getElementById('procedenciaOtra').value.trim();
  const s=document.getElementById('procedenciaSelect').value;
  return s==='__otra__'?document.getElementById('procedenciaOtra').value.trim():s;
+}
+
+// ═══════════════════════════════════════════════
+// GRADOS SEGÚN TIPO DE INSCRIPCIÓN
+// ═══════════════════════════════════════════════
+function gradosDelNivel(){
+ return escuelaSeleccionada.nivel==='preparatoria'
+  ?['1° Semestre','2° Semestre','3° Semestre','4° Semestre','5° Semestre','6° Semestre']
+  :['1° Grado','2° Grado','3° Grado'];
+}
+function actualizarGrados(){
+ const gradoEl=document.getElementById('grado');
+ const hint=document.getElementById('gradoHint');
+ gradoEl.innerHTML='<option value="">—</option>';
+ gradoEl.disabled=false;hint.style.display='none';
+ if(!escuelaSeleccionada)return;
+ const todos=gradosDelNivel();
+ const tipo=document.getElementById('tipoInscripcion').value;
+ let lista=todos;
+ if(tipo==='Nuevo ingreso')lista=[todos[0]];
+ else if(tipo==='Reinscripción'||tipo==='Traslado')lista=todos.slice(1);
+ lista.forEach(g=>{const o=document.createElement('option');o.textContent=g;gradoEl.appendChild(o);});
+ if(tipo==='Nuevo ingreso'){
+  gradoEl.value=todos[0];
+  gradoEl.disabled=true;
+  hint.style.display='block';
+ }
+}
+function onTipoInscripcionChange(){actualizarGrados();checkSubA();}
+
+// ═══════════════════════════════════════════════
+// SUB B SEGÚN TIPO DE INSCRIPCIÓN
+// ═══════════════════════════════════════════════
+function configurarSubB(){
+ const tipo=document.getElementById('tipoInscripcion').value;
+ const nivel=escuelaSeleccionada.nivel;
+ const selWrap=document.getElementById('procedenciaSelectWrap');
+ const otraWrap=document.getElementById('procedenciaOtraWrap');
+ const labelOtra=document.getElementById('label-procedencia-otra');
+ const promLabel=document.getElementById('label-promedio');
+ if(tipo==='Reinscripción'){
+  // Mismo plantel: no se pide escuela anterior
+  selWrap.style.display='none';
+  otraWrap.style.display='none';
+  promLabel.innerHTML='Promedio del último ciclo cursado <span class="req">*</span>';
+ } else if(tipo==='Traslado'){
+  // Viene de otro plantel del MISMO nivel
+  selWrap.style.display='none';
+  otraWrap.style.display='flex';
+  labelOtra.innerHTML='Plantel de procedencia ('+(nivel==='preparatoria'?'preparatoria':'secundaria')+') <span class="req">*</span>';
+  document.getElementById('procedenciaOtra').placeholder='Nombre del plantel anterior';
+  promLabel.innerHTML='Promedio del último ciclo <span class="req">*</span>';
+ } else {
+  // Nuevo ingreso: viene del nivel anterior (dropdown)
+  selWrap.style.display='flex';
+  otraWrap.style.display=document.getElementById('procedenciaSelect').value==='__otra__'?'flex':'none';
+  labelOtra.innerHTML='Especifica la escuela <span class="req">*</span>';
+  promLabel.innerHTML='Promedio de egreso <span class="req">*</span>';
+ }
+ checkSubB();
 }
 
 // ═══════════════════════════════════════════════
@@ -711,6 +802,7 @@ function goSub(sub){
  const el=document.getElementById('sub'+sub);
  el.style.display='flex';el.style.flexDirection='column';
  document.getElementById('s4').scrollTop=0;
+ if(sub==='B')configurarSubB();
  if(sub==='D'){
   const esMayor=tipoSelected===3;
   document.getElementById('subD-familia').style.display=esMayor?'none':'flex';
@@ -852,7 +944,11 @@ function fillReview(){
  document.getElementById('r-grado').textContent=document.getElementById('grado').value;
  document.getElementById('r-tipoins').textContent=document.getElementById('tipoInscripcion').value;
  document.getElementById('r-sec').textContent=getProcedencia();
- document.getElementById('r-sec-label').textContent=escuelaSeleccionada.nivel==='preparatoria'?'Secundaria':'Primaria';
+ const tipoIns=document.getElementById('tipoInscripcion').value;
+ const lblSec=document.getElementById('r-sec-label');
+ if(tipoIns==='Reinscripción')lblSec.textContent='Procedencia';
+ else if(tipoIns==='Traslado')lblSec.textContent='Plantel anterior';
+ else lblSec.textContent=escuelaSeleccionada.nivel==='preparatoria'?'Secundaria':'Primaria';
  document.getElementById('r-prom').textContent=parseFloat(document.getElementById('promedio').value).toFixed(1);
  document.getElementById('r-turno').textContent=document.getElementById('turno').value||'Sin preferencia';
  const cp=document.getElementById('cp').value.trim();
@@ -908,6 +1004,7 @@ async function enviar(){
   tipo_solicitante:tipoSelected===1?'Padre/Tutor':tipoSelected===2?'Alumno menor':'Alumno mayor',
   sin_dato_padre:sinP,
   sin_dato_madre:sinM,
+  estado:'Pendiente',
   foto_habilitada:false,
  };
  const {error}=await sb.from('registros').insert(reg);
@@ -934,6 +1031,8 @@ function reiniciar(){
  ['fnacDia','fnacMes','fnacAnio','sexo','grado','turno','procedenciaSelect','tipoInscripcion'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
  ['sinDatosPadre','sinTelPadre','sinDatosMadre','sinTelMadre'].forEach(id=>{const el=document.getElementById(id);el.checked=false;el.disabled=false;});
  document.getElementById('procedenciaOtraWrap').style.display='none';
+ document.getElementById('grado').disabled=false;
+ document.getElementById('gradoHint').style.display='none';
  document.getElementById('curp').classList.remove('invalid');
  document.getElementById('curpError').style.display='none';
  document.getElementById('btnSubA').disabled=true;
@@ -980,8 +1079,14 @@ function renderConsulta(){
   html+='<div class="info-banner"><span class="ib-icon">✎</span><p>El plantel habilitó cambios para tu registro. Puedes '+(r.foto_url?'reemplazar la':'subir tu')+' foto y corregir tus datos.</p></div>'+
    '<div class="photo-upload" onclick="subirFotoUsuario()"><span class="pu-icon">📷</span><p>'+(r.foto_url?'Toca para reemplazar la foto':'Toca para subir foto del alumno')+'</p></div>'+
    '<button class="btn-secondary" onclick="abrirEditUsuario()">Corregir mis datos</button>';
- } else {
-  html+='<div class="info-banner"><span class="ib-icon">ⓘ</span><p>Tu registro está en revisión. Si el plantel necesita que subas foto o corrijas datos, aquí aparecerá la opción.</p></div>';
+ }
+ const est=r.estado||'Pendiente';
+ if(est==='Aceptado'){
+  html+='<div class="info-banner banner-aceptado"><span class="ib-icon">✓</span><p><strong>¡Felicidades!</strong> Tu solicitud fue aceptada. El plantel te contactará con los siguientes pasos para formalizar la inscripción.</p></div>';
+ } else if(est==='Rechazado'){
+  html+='<div class="info-banner banner-rechazado"><span class="ib-icon">ⓘ</span><p>Tu solicitud no fue aceptada en este proceso. Puedes acercarte al plantel para conocer los motivos y las opciones disponibles.</p></div>';
+ } else if(!r.foto_habilitada){
+  html+='<div class="info-banner"><span class="ib-icon">ⓘ</span><p>Tu registro está <strong>en revisión</strong>. Si el plantel necesita que subas foto o corrijas datos, aquí aparecerá la opción.</p></div>';
  }
  cont.innerHTML=html;
 }
@@ -1157,6 +1262,7 @@ function renderRegistros(){
  lista.innerHTML='';
  filtrados.forEach(r=>{
   const idx=registros.findIndex(x=>x.id===r.id);
+  const est=r.estado||'Pendiente';
   const avatar=r.foto_url
    ?'<img src="'+r.foto_url+'" class="reg-avatar" onclick="verFoto(\''+r.foto_url+'\')" alt="Foto">'
    :'<div class="reg-avatar-placeholder">👤</div>';
@@ -1166,20 +1272,34 @@ function renderRegistros(){
    '<div class="reg-card-top">'+avatar+
     '<div class="reg-card-info">'+
      '<div class="reg-card-header"><span class="reg-folio">'+r.folio+'</span>'+
-      (r.foto_habilitada?'<span class="cambios-badge">Cambios abiertos</span>':'<span style="font-size:10px;color:#9DAABF;">'+r.fecha+'</span>')+
+      '<span style="display:flex;gap:4px;align-items:center;"><span class="estado-badge est-'+est+'">'+est+'</span>'+
+      (r.foto_habilitada?'<span class="cambios-badge">Cambios</span>':'')+'</span>'+
      '</div>'+
      '<div class="reg-nombre">'+r.nombre+'</div>'+
-     '<div class="reg-meta">'+r.escuela+' · '+r.grado+' · Prom. '+r.promedio+'</div>'+
+     '<div class="reg-meta">'+r.escuela+' · '+r.grado+' · Prom. '+r.promedio+' · '+r.fecha+'</div>'+
     '</div>'+
    '</div>'+
    '<div class="reg-actions">'+
     '<button class="btn-sm btn-sm-blue" onclick="abrirEdit('+idx+')">✎ Editar</button>'+
     '<button class="btn-sm '+(r.foto_habilitada?'btn-sm-orange':'btn-sm-green')+'" onclick="toggleCambios('+idx+')">'+(r.foto_habilitada?'Cerrar cambios':'Habilitar cambios')+'</button>'+
+    '<button class="btn-sm btn-sm-blue" onclick="cicloEstado('+idx+')">Estado ↻</button>'+
     '<button class="btn-sm btn-sm-green" onclick="subirFotoDirector('+idx+')">📷</button>'+
     '<button class="btn-sm btn-sm-green" onclick="exportarUno('+idx+')">⬇</button>'+
    '</div>';
   lista.appendChild(div);
  });
+}
+
+async function cicloEstado(idx){
+ const r=registros[idx];
+ const orden=['Pendiente','Aceptado','Rechazado'];
+ const actual=r.estado||'Pendiente';
+ const nuevo=orden[(orden.indexOf(actual)+1)%orden.length];
+ const {error}=await sb.from('registros').update({estado:nuevo}).eq('id',r.id);
+ if(error){showToast('Error al actualizar estado');return;}
+ registros[idx].estado=nuevo;
+ showToast(r.folio+' → '+nuevo);
+ renderRegistros();
 }
 
 async function toggleCambios(idx){
@@ -1274,7 +1394,7 @@ async function cargarStats(){
 }
 
 function toCSV(datos){
- const cols=['folio','fecha','escuela','nivel','nombre','fecha_nac','sexo','curp','grado','tipo_inscripcion','procedencia','promedio','turno','domicilio','padre','tel_padre','email_padre','madre','tel_madre','email_madre','tel_alumno','email','tipo_solicitante'];
+ const cols=['folio','fecha','estado','escuela','nivel','nombre','fecha_nac','sexo','curp','grado','tipo_inscripcion','procedencia','promedio','turno','domicilio','padre','tel_padre','email_padre','madre','tel_madre','email_madre','tel_alumno','email','tipo_solicitante'];
  const header=cols.join(',');
  const rows=Array.isArray(datos)?datos:[datos];
  const lines=rows.map(r=>cols.map(c=>'"'+(r[c]??'').toString().replace(/"/g,'""')+'"').join(','));
@@ -1293,6 +1413,69 @@ async function exportarTodos(){
  hideLoading();
  if(!data||data.length===0){showToast('Sin registros aún');return;}
  descargarCSV(toCSV(data),'preinscripciones_2026.csv');
+}
+
+// ═══════════════════════════════════════════════
+// FOTOS: EXPORTAR ZIP / IMPORTAR MASIVO
+// ═══════════════════════════════════════════════
+async function exportarFotosZip(){
+ showLoading('Recopilando fotos...');
+ const {data}=await sb.from('registros').select('folio,foto_url').not('foto_url','is',null);
+ if(!data||data.length===0){hideLoading();showToast('No hay fotos registradas aún');return;}
+ const zip=new JSZip();
+ let n=0;
+ for(const r of data){
+  try{
+   const resp=await fetch(r.foto_url);
+   if(!resp.ok)continue;
+   const blob=await resp.blob();
+   let ext=(r.foto_url.split('.').pop()||'jpg').split('?')[0].toLowerCase();
+   if(ext.length>4)ext='jpg';
+   zip.file(r.folio+'.'+ext,blob);
+   n++;
+  }catch(e){}
+ }
+ if(n===0){hideLoading();showToast('No se pudieron descargar las fotos');return;}
+ showLoading('Generando ZIP ('+n+' fotos)...');
+ const content=await zip.generateAsync({type:'blob'});
+ hideLoading();
+ const url=URL.createObjectURL(content);
+ const a=document.createElement('a');
+ a.href=url;a.download='fotos_alumnos.zip';a.click();URL.revokeObjectURL(url);
+ showToast(n+' fotos exportadas ✓');
+}
+
+function importarFotos(){
+ const input=document.createElement('input');
+ input.type='file';input.accept='image/*';input.multiple=true;
+ input.onchange=async e=>{
+  const files=[...e.target.files];
+  if(!files.length)return;
+  showLoading('Importando '+files.length+' fotos...');
+  let ok=0,sinMatch=0,errores=0;
+  for(const f of files){
+   // El nombre del archivo (sin extensión) debe ser el folio
+   const base=f.name.replace(/\.[^.]+$/,'').split('_')[0].trim().toUpperCase();
+   const reg=registros.find(r=>r.folio.toUpperCase()===base);
+   if(!reg){sinMatch++;continue;}
+   const ext=(f.name.split('.').pop()||'jpg').toLowerCase();
+   const path=reg.folio+'_'+Date.now()+'_'+Math.floor(Math.random()*1000)+'.'+ext;
+   const {error:upErr}=await sb.storage.from('fotos-alumnos').upload(path,f);
+   if(upErr){errores++;continue;}
+   const {data:u}=sb.storage.from('fotos-alumnos').getPublicUrl(path);
+   const {error:dbErr}=await sb.from('registros').update({foto_url:u.publicUrl}).eq('id',reg.id);
+   if(dbErr){errores++;continue;}
+   reg.foto_url=u.publicUrl;
+   ok++;
+  }
+  hideLoading();
+  renderRegistros();
+  let msg=ok+' asignadas';
+  if(sinMatch)msg+=' · '+sinMatch+' sin folio coincidente';
+  if(errores)msg+=' · '+errores+' con error';
+  showToast(msg,4000);
+ };
+ input.click();
 }
 </script>
 </body>
