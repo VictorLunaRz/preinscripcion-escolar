@@ -5,752 +5,1032 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Preinscripción Escolar</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.3.0/tabler-icons.min.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#E8EDF2;min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:24px;}
-.phone-wrap{display:flex;flex-direction:column;align-items:center;gap:16px;}
-.phone{width:375px;background:#F5F7FA;border-radius:40px;border:2.5px solid #C8D0DA;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 24px 64px rgba(0,0,0,0.18),inset 0 1px 0 rgba(255,255,255,0.6);}
-
-/* STATUS BAR */
-.status-bar{background:linear-gradient(135deg,#0D4F8C,#1A6FBF);color:#fff;font-size:12px;padding:9px 22px;display:flex;justify-content:space-between;align-items:center;font-weight:500;}
-
-/* HEADER */
-.app-header{background:linear-gradient(135deg,#0D4F8C,#1A6FBF);padding:10px 18px 20px;display:flex;align-items:center;gap:12px;}
-.logo-circle{width:40px;height:40px;background:rgba(255,255,255,0.15);border-radius:12px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,0.25);flex-shrink:0;}
-.logo-circle i{font-size:22px;color:#fff;}
-.header-text h1{font-size:16px;font-weight:700;color:#fff;line-height:1.2;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#E8EDF2;min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:24px 12px;}
+.phone-wrap{display:flex;flex-direction:column;align-items:center;gap:16px;width:100%;max-width:400px;position:relative;}
+.phone{width:100%;background:#F5F7FA;border-radius:36px;border:2px solid #C8D0DA;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,0.15);}
+.status-bar{background:linear-gradient(135deg,#0D4F8C,#1A6FBF);color:#fff;font-size:12px;padding:8px 20px;display:flex;justify-content:space-between;font-weight:500;}
+.app-header{background:linear-gradient(135deg,#0D4F8C,#1A6FBF);padding:10px 16px 18px;display:flex;align-items:center;gap:12px;}
+.logo-circle{width:38px;height:38px;background:rgba(255,255,255,0.15);border-radius:11px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,0.2);flex-shrink:0;}
+.logo-circle i{font-size:20px;color:#fff;}
+.header-text h1{font-size:15px;font-weight:700;color:#fff;line-height:1.2;}
 .header-text p{font-size:11px;color:rgba(255,255,255,0.7);margin-top:1px;}
-.back-btn{background:rgba(255,255,255,0.15);border:none;color:#fff;width:34px;height:34px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
-
-/* SCREENS */
-.screen{flex:1;padding:20px;display:flex;flex-direction:column;gap:16px;overflow-y:auto;min-height:540px;}
+.back-btn{background:rgba(255,255,255,0.15);border:none;color:#fff;width:32px;height:32px;border-radius:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+.director-btn{margin-left:auto;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.7);font-size:11px;padding:5px 10px;border-radius:8px;cursor:pointer;white-space:nowrap;}
+.director-btn:hover{background:rgba(255,255,255,0.2);}
+.screen{flex:1;padding:18px;display:flex;flex-direction:column;gap:14px;min-height:520px;}
 .screen.hidden{display:none;}
-
-/* PROGRESS */
-.progress-wrap{display:flex;flex-direction:column;gap:6px;}
-.progress-bar{display:flex;gap:5px;}
+.progress-wrap{display:flex;flex-direction:column;gap:5px;}
+.progress-bar{display:flex;gap:4px;}
 .progress-step{flex:1;height:3px;border-radius:2px;background:#D5DCE8;transition:background 0.3s;}
 .progress-step.done{background:#0D4F8C;}
 .progress-step.active{background:#4A9FE0;}
-.progress-info{display:flex;justify-content:space-between;align-items:center;}
+.progress-info{display:flex;justify-content:space-between;}
 .step-label{font-size:10px;color:#4A9FE0;font-weight:700;text-transform:uppercase;letter-spacing:1px;}
 .step-of{font-size:10px;color:#9DAABF;}
-
-/* TYPOGRAPHY */
-.screen-title{font-size:19px;font-weight:700;color:#0D1F35;line-height:1.25;}
-.screen-sub{font-size:13px;color:#6B7A92;line-height:1.55;}
-
-/* WELCOME */
-.welcome-hero{background:linear-gradient(135deg,#EAF3FF,#F0F7FF);border-radius:18px;padding:22px;text-align:center;border:1px solid #C8DCF5;}
-.welcome-icon{width:64px;height:64px;background:linear-gradient(135deg,#0D4F8C,#1A6FBF);border-radius:18px;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;}
-.welcome-icon i{font-size:30px;color:#fff;}
-.checklist{display:flex;flex-direction:column;gap:8px;margin-top:4px;}
-.checklist-item{display:flex;align-items:center;gap:10px;font-size:13px;color:#4B5A70;background:#fff;padding:10px 12px;border-radius:10px;border:1px solid #E4EAF3;}
-.checklist-item i{font-size:15px;color:#2A7D4F;flex-shrink:0;}
-
-/* BUTTONS */
-.btn-primary{background:linear-gradient(135deg,#0D4F8C,#1A6FBF);color:#fff;border:none;border-radius:14px;padding:15px;font-size:15px;font-weight:700;cursor:pointer;width:100%;transition:opacity 0.2s;letter-spacing:0.2px;}
-.btn-primary:hover{opacity:0.92;}
+.screen-title{font-size:18px;font-weight:700;color:#0D1F35;}
+.screen-sub{font-size:13px;color:#6B7A92;line-height:1.5;}
+.welcome-hero{background:linear-gradient(135deg,#EAF3FF,#F0F7FF);border-radius:16px;padding:20px;text-align:center;border:1px solid #C8DCF5;}
+.welcome-icon{width:60px;height:60px;background:linear-gradient(135deg,#0D4F8C,#1A6FBF);border-radius:16px;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;}
+.welcome-icon i{font-size:28px;color:#fff;}
+.checklist{display:flex;flex-direction:column;gap:7px;}
+.checklist-item{display:flex;align-items:center;gap:9px;font-size:13px;color:#4B5A70;background:#fff;padding:9px 12px;border-radius:10px;border:1px solid #E4EAF3;}
+.checklist-item i{font-size:14px;color:#2A7D4F;flex-shrink:0;}
+.btn-primary{background:linear-gradient(135deg,#0D4F8C,#1A6FBF);color:#fff;border:none;border-radius:13px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;width:100%;transition:opacity 0.2s;}
+.btn-primary:hover{opacity:0.9;}
 .btn-primary:disabled{background:#C8D0DA;color:#9DAABF;cursor:not-allowed;}
-.btn-secondary{background:#fff;color:#0D4F8C;border:1.5px solid #B8CCE8;border-radius:14px;padding:14px;font-size:14px;font-weight:600;cursor:pointer;width:100%;transition:background 0.2s;}
+.btn-secondary{background:#fff;color:#0D4F8C;border:1.5px solid #B8CCE8;border-radius:13px;padding:13px;font-size:14px;font-weight:600;cursor:pointer;width:100%;}
 .btn-secondary:hover{background:#EAF3FF;}
 .btn-row{display:flex;gap:10px;margin-top:auto;}
-
-/* PRIVACY */
-.privacy-box{background:#fff;border-radius:14px;padding:16px;border:1px solid #D5DCE8;font-size:12.5px;color:#4B5A70;line-height:1.7;height:220px;overflow-y:auto;}
-.privacy-box h4{font-size:13px;color:#0D1F35;margin-bottom:8px;font-weight:700;}
-.privacy-box p{margin-bottom:10px;}
-.privacy-box p:last-child{margin-bottom:0;}
-.checkbox-card{background:#fff;border-radius:12px;padding:14px;border:1.5px solid #D5DCE8;display:flex;align-items:flex-start;gap:12px;cursor:pointer;transition:border-color 0.2s;}
-.checkbox-card:has(input:checked){border-color:#0D4F8C;background:#EAF3FF;}
-.checkbox-card input{width:18px;height:18px;margin-top:1px;flex-shrink:0;accent-color:#0D4F8C;cursor:pointer;}
+.privacy-box{background:#fff;border-radius:13px;padding:15px;border:1px solid #D5DCE8;font-size:12.5px;color:#4B5A70;line-height:1.7;height:210px;overflow-y:auto;}
+.privacy-box h4{font-size:13px;color:#0D1F35;margin-bottom:7px;font-weight:700;}
+.privacy-box p{margin-bottom:9px;}
+.checkbox-card{background:#fff;border-radius:11px;padding:13px;border:1.5px solid #D5DCE8;display:flex;align-items:flex-start;gap:11px;cursor:pointer;}
+.checkbox-card.checked{border-color:#0D4F8C;background:#EAF3FF;}
+.checkbox-card input{width:17px;height:17px;margin-top:1px;flex-shrink:0;accent-color:#0D4F8C;cursor:pointer;}
 .checkbox-card label{font-size:13px;color:#4B5A70;line-height:1.5;cursor:pointer;}
-
-/* TIPO */
-.tipo-btn{border:1.5px solid #D5DCE8;border-radius:16px;padding:14px 16px;background:#fff;cursor:pointer;display:flex;align-items:center;gap:14px;width:100%;text-align:left;transition:all 0.15s;}
+.tipo-btn{border:1.5px solid #D5DCE8;border-radius:14px;padding:13px 15px;background:#fff;cursor:pointer;display:flex;align-items:center;gap:13px;width:100%;text-align:left;transition:all 0.15s;}
 .tipo-btn:hover{border-color:#4A9FE0;background:#F0F7FF;}
 .tipo-btn.selected{border:2px solid #0D4F8C;background:#EAF3FF;}
-.tipo-icon-wrap{width:42px;height:42px;border-radius:12px;background:#EAF3FF;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.tipo-icon-wrap{width:40px;height:40px;border-radius:11px;background:#EAF3FF;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .tipo-btn.selected .tipo-icon-wrap{background:#C8DCF5;}
-.tipo-icon-wrap i{font-size:22px;color:#0D4F8C;}
+.tipo-icon-wrap i{font-size:21px;color:#0D4F8C;}
 .tipo-strong{font-size:14px;color:#0D1F35;font-weight:700;display:block;margin-bottom:2px;}
 .tipo-span{font-size:11.5px;color:#6B7A92;line-height:1.4;}
-
-/* FORM SUB-STEPS */
-.substep-header{display:flex;align-items:center;gap:10px;margin-bottom:2px;}
-.substep-num{width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,#0D4F8C,#1A6FBF);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.substep-header{display:flex;align-items:center;gap:9px;}
+.substep-num{width:24px;height:24px;border-radius:7px;background:linear-gradient(135deg,#0D4F8C,#1A6FBF);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .substep-title{font-size:15px;font-weight:700;color:#0D1F35;}
-
 .form-group{display:flex;flex-direction:column;gap:5px;}
-.form-label{font-size:11px;font-weight:700;color:#6B7A92;text-transform:uppercase;letter-spacing:0.6px;}
+.form-label{font-size:11px;font-weight:700;color:#6B7A92;text-transform:uppercase;letter-spacing:0.5px;}
 .req{color:#C0392B;}
-.form-input{padding:12px 13px;border:1.5px solid #D5DCE8;border-radius:11px;font-size:15px;color:#0D1F35;background:#fff;width:100%;transition:border-color 0.15s;outline:none;}
-.form-input:focus{border-color:#1A6FBF;box-shadow:0 0 0 3px rgba(26,111,191,0.12);}
-.form-select{padding:12px 13px;border:1.5px solid #D5DCE8;border-radius:11px;font-size:15px;color:#0D1F35;background:#fff;width:100%;outline:none;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236B7A92' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 13px center;}
-.form-select:focus{border-color:#1A6FBF;box-shadow:0 0 0 3px rgba(26,111,191,0.12);}
-.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-.grid-3{display:grid;grid-template-columns:1fr 2fr 1.2fr;gap:8px;}
-.curp-hint{font-size:11px;color:#9DAABF;margin-top:2px;}
-.promedio-note{font-size:11px;color:#9DAABF;margin-top:2px;}
-
-/* REVIEW */
-.review-section{background:#fff;border-radius:14px;border:1px solid #E4EAF3;overflow:hidden;margin-bottom:2px;}
-.review-section-header{background:#F0F4FA;padding:9px 14px;font-size:11px;font-weight:700;color:#0D4F8C;text-transform:uppercase;letter-spacing:0.8px;border-bottom:1px solid #E4EAF3;}
-.review-row{display:flex;justify-content:space-between;align-items:flex-start;padding:9px 14px;border-bottom:1px solid #F5F7FA;}
+.form-input{padding:11px 12px;border:1.5px solid #D5DCE8;border-radius:10px;font-size:15px;color:#0D1F35;background:#fff;width:100%;outline:none;transition:border-color 0.15s;}
+.form-input:focus{border-color:#1A6FBF;box-shadow:0 0 0 3px rgba(26,111,191,0.1);}
+.form-select{padding:11px 12px;border:1.5px solid #D5DCE8;border-radius:10px;font-size:15px;color:#0D1F35;background:#fff;width:100%;outline:none;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236B7A92' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;}
+.form-select:focus{border-color:#1A6FBF;box-shadow:0 0 0 3px rgba(26,111,191,0.1);}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+.grid-3{display:grid;grid-template-columns:1fr 2fr 1.2fr;gap:7px;}
+.field-hint{font-size:11px;color:#9DAABF;margin-top:2px;}
+.section-divider{display:flex;align-items:center;gap:8px;margin:4px 0;}
+.section-divider span{font-size:11px;font-weight:700;color:#0D4F8C;text-transform:uppercase;letter-spacing:0.7px;white-space:nowrap;}
+.section-divider::before,.section-divider::after{content:'';flex:1;height:1px;background:#E4EAF3;}
+.review-section{background:#fff;border-radius:13px;border:1px solid #E4EAF3;overflow:hidden;}
+.review-section-header{background:#F0F4FA;padding:8px 13px;font-size:10px;font-weight:700;color:#0D4F8C;text-transform:uppercase;letter-spacing:0.8px;border-bottom:1px solid #E4EAF3;}
+.review-row{display:flex;justify-content:space-between;align-items:flex-start;padding:8px 13px;border-bottom:1px solid #F5F7FA;}
 .review-row:last-child{border-bottom:none;}
 .r-key{font-size:12px;color:#9DAABF;font-weight:500;}
 .r-val{font-size:13px;color:#0D1F35;font-weight:600;text-align:right;max-width:60%;}
-
-/* SUCCESS */
-.success-hero{text-align:center;padding:10px 0;}
-.success-circle{width:80px;height:80px;background:linear-gradient(135deg,#1A7A4A,#2EAD6A);border-radius:24px;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;}
-.success-circle i{font-size:40px;color:#fff;}
-.folio-box{background:linear-gradient(135deg,#EAF3FF,#F0F7FF);border-radius:16px;padding:18px;text-align:center;border:1px solid #C8DCF5;}
-.folio-num{font-size:24px;font-weight:800;color:#0D4F8C;letter-spacing:3px;font-family:'Courier New',monospace;}
-.folio-label{font-size:11px;color:#4A9FE0;margin-top:5px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;}
-.info-banner{background:#F0F7FF;border-radius:12px;padding:12px 14px;display:flex;gap:10px;align-items:flex-start;border:1px solid #C8DCF5;}
-.info-banner i{font-size:16px;color:#1A6FBF;margin-top:1px;flex-shrink:0;}
+.success-circle{width:72px;height:72px;background:linear-gradient(135deg,#1A7A4A,#2EAD6A);border-radius:22px;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;}
+.success-circle i{font-size:36px;color:#fff;}
+.folio-box{background:linear-gradient(135deg,#EAF3FF,#F0F7FF);border-radius:14px;padding:16px;text-align:center;border:1px solid #C8DCF5;}
+.folio-num{font-size:22px;font-weight:800;color:#0D4F8C;letter-spacing:3px;font-family:'Courier New',monospace;}
+.folio-label{font-size:10px;color:#4A9FE0;margin-top:4px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;}
+.info-banner{background:#F0F7FF;border-radius:11px;padding:11px 13px;display:flex;gap:9px;align-items:flex-start;border:1px solid #C8DCF5;}
+.info-banner i{font-size:15px;color:#1A6FBF;margin-top:1px;flex-shrink:0;}
 .info-banner p{font-size:12px;color:#2A4F7A;line-height:1.55;}
-
-/* CSV BUTTON */
-.btn-csv{background:#F0F9F0;color:#1A7A4A;border:1.5px solid #A8D5B5;border-radius:14px;padding:13px;font-size:14px;font-weight:700;cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center;gap:8px;transition:background 0.2s;}
-.btn-csv:hover{background:#DFF0E0;}
-.btn-csv i{font-size:18px;}
-
-/* MINI STATS */
+.photo-upload{border:2px dashed #B8CCE8;border-radius:13px;padding:20px;text-align:center;cursor:pointer;background:#F0F7FF;transition:all 0.2s;}
+.photo-upload:hover{border-color:#0D4F8C;background:#EAF3FF;}
+.photo-upload i{font-size:32px;color:#4A9FE0;display:block;margin-bottom:8px;}
+.photo-upload p{font-size:13px;color:#6B7A92;}
+.photo-preview{width:100%;max-height:200px;object-fit:cover;border-radius:11px;border:1px solid #D5DCE8;}
+.dir-overlay{position:absolute;inset:0;background:rgba(0,0,0,0.55);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px;border-radius:36px;}
+.dir-overlay.hidden{display:none;}
+.dir-modal{background:#fff;border-radius:20px;width:100%;max-width:420px;height:520px;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,0.3);}
+.dir-modal-header{background:linear-gradient(135deg,#0D4F8C,#1A6FBF);padding:16px 20px;border-radius:20px 20px 0 0;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.dir-modal-header h2{color:#fff;font-size:16px;font-weight:700;}
+.dir-close{background:rgba(255,255,255,0.15);border:none;color:#fff;width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;}
+.dir-body{padding:18px;display:flex;flex-direction:column;gap:16px;flex:1;overflow-y:auto;}
+.dir-tabs{display:flex;gap:6px;background:#F0F4FA;padding:5px;border-radius:11px;}
+.dir-tab{flex:1;padding:8px;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;background:transparent;color:#6B7A92;transition:all 0.2s;}
+.dir-tab.active{background:#fff;color:#0D4F8C;box-shadow:0 1px 4px rgba(0,0,0,0.1);}
+.dir-section{display:none;flex-direction:column;gap:12px;}
+.dir-section.active{display:flex;}
+.escuela-card{background:#F8FAFB;border:1px solid #E4EAF3;border-radius:11px;padding:12px 14px;display:flex;align-items:center;gap:10px;}
+.escuela-badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;text-transform:uppercase;letter-spacing:0.5px;}
+.badge-prep{background:#EAF3FF;color:#0D4F8C;}
+.badge-sec{background:#F0FFF4;color:#1A7A4A;}
+.escuela-name{font-size:14px;font-weight:600;color:#0D1F35;flex:1;}
+.toggle-switch{position:relative;width:40px;height:22px;flex-shrink:0;}
+.toggle-switch input{opacity:0;width:0;height:0;}
+.toggle-slider{position:absolute;inset:0;background:#C8D0DA;border-radius:11px;cursor:pointer;transition:0.3s;}
+.toggle-slider:before{content:'';position:absolute;width:16px;height:16px;left:3px;top:3px;background:#fff;border-radius:50%;transition:0.3s;}
+.toggle-switch input:checked + .toggle-slider{background:#0D4F8C;}
+.toggle-switch input:checked + .toggle-slider:before{transform:translateX(18px);}
+.reg-card{background:#F8FAFB;border:1px solid #E4EAF3;border-radius:11px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;}
+.reg-card-header{display:flex;align-items:center;justify-content:space-between;}
+.reg-folio{font-size:12px;font-weight:700;color:#0D4F8C;font-family:monospace;}
+.reg-nombre{font-size:14px;font-weight:600;color:#0D1F35;}
+.reg-meta{font-size:11px;color:#9DAABF;}
+.reg-actions{display:flex;gap:6px;margin-top:4px;flex-wrap:wrap;}
+.btn-sm{padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:none;display:flex;align-items:center;gap:5px;}
+.btn-sm-blue{background:#EAF3FF;color:#0D4F8C;}
+.btn-sm-green{background:#F0FFF4;color:#1A7A4A;}
+.btn-sm-red{background:#FFF0F0;color:#C0392B;}
+.btn-sm-orange{background:#FFF7ED;color:#C2620A;}
 .stats-row{display:flex;gap:8px;}
-.stat-card{flex:1;background:#fff;border-radius:12px;padding:12px;text-align:center;border:1px solid #E4EAF3;}
-.stat-num{font-size:22px;font-weight:800;color:#0D4F8C;}
+.stat-card{flex:1;background:#fff;border-radius:11px;padding:11px;text-align:center;border:1px solid #E4EAF3;}
+.stat-num{font-size:20px;font-weight:800;color:#0D4F8C;}
 .stat-label{font-size:10px;color:#9DAABF;margin-top:2px;text-transform:uppercase;letter-spacing:0.5px;}
+.login-box{background:#F8FAFB;border-radius:14px;padding:20px;border:1px solid #E4EAF3;display:flex;flex-direction:column;gap:12px;text-align:center;}
+.login-icon{width:56px;height:56px;background:linear-gradient(135deg,#0D4F8C,#1A6FBF);border-radius:16px;margin:0 auto;display:flex;align-items:center;justify-content:center;}
+.login-icon i{font-size:26px;color:#fff;}
+.login-error{font-size:12px;color:#C0392B;text-align:center;display:none;}
+.edit-overlay{position:absolute;inset:0;background:rgba(0,0,0,0.6);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px;border-radius:36px;}
+.edit-overlay.hidden{display:none;}
+.edit-modal{background:#fff;border-radius:18px;width:100%;max-width:400px;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3);}
+.edit-modal-header{background:linear-gradient(135deg,#0D4F8C,#1A6FBF);padding:14px 18px;border-radius:18px 18px 0 0;display:flex;align-items:center;justify-content:space-between;}
+.edit-modal-header h3{color:#fff;font-size:15px;font-weight:700;}
+.edit-body{padding:16px;display:flex;flex-direction:column;gap:12px;}
+.btn-csv{background:#F0F9F0;color:#1A7A4A;border:1.5px solid #A8D5B5;border-radius:11px;padding:11px;font-size:13px;font-weight:700;cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center;gap:7px;}
+.btn-csv i{font-size:16px;}
+/* LOADING OVERLAY */
+.loading-overlay{position:absolute;inset:0;background:rgba(255,255,255,0.85);z-index:300;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;border-radius:36px;}
+.loading-overlay.hidden{display:none;}
+.spinner{width:36px;height:36px;border:3px solid #D5DCE8;border-top-color:#0D4F8C;border-radius:50%;animation:spin 0.8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loading-text{font-size:13px;color:#6B7A92;font-weight:500;}
+.toast{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);background:#0D1F35;color:#fff;font-size:13px;font-weight:500;padding:10px 18px;border-radius:10px;z-index:400;opacity:0;transition:opacity 0.3s;white-space:nowrap;}
+.toast.show{opacity:1;}
 </style>
 </head>
 <body>
 <div class="phone-wrap">
-  <div class="phone">
-    <div class="status-bar">
-      <span>9:41</span>
-      <span><i class="ti ti-wifi"></i> &nbsp;<i class="ti ti-battery-2"></i></span>
-    </div>
-    <div class="app-header" id="header">
-      <button class="back-btn" id="back-btn" onclick="goBack()" style="display:none"><i class="ti ti-arrow-left"></i></button>
-      <div class="logo-circle" id="header-logo"><i class="ti ti-school"></i></div>
-      <div class="header-text">
-        <h1 id="header-title">Preinscripción</h1>
-        <p id="header-sub">Ciclo escolar 2026–2027</p>
-      </div>
-    </div>
-
-    <!-- S0: BIENVENIDA -->
-    <div id="s0" class="screen">
-      <div class="welcome-hero">
-        <div class="welcome-icon"><i class="ti ti-school"></i></div>
-        <p class="screen-title">Bienvenido/a</p>
-        <p class="screen-sub" style="margin-top:6px;">Completa tu preinscripción en minutos desde tu teléfono.</p>
-      </div>
-      <p style="font-size:12px;font-weight:700;color:#9DAABF;text-transform:uppercase;letter-spacing:0.8px;">Necesitarás tener a la mano</p>
-      <div class="checklist">
-        <div class="checklist-item"><i class="ti ti-check"></i>Nombre completo del alumno y CURP</div>
-        <div class="checklist-item"><i class="ti ti-check"></i>Fecha de nacimiento</div>
-        <div class="checklist-item"><i class="ti ti-check"></i>Secundaria de procedencia y promedio</div>
-        <div class="checklist-item"><i class="ti ti-check"></i>Dirección del alumno</div>
-        <div class="checklist-item"><i class="ti ti-check"></i>Datos de contacto del padre/tutor</div>
-      </div>
-      <div style="margin-top:auto;">
-        <button class="btn-primary" onclick="go(1)">Comenzar preinscripción →</button>
-      </div>
-    </div>
-
-    <!-- S1: AVISO DE PRIVACIDAD -->
-    <div id="s1" class="screen hidden">
-      <div class="progress-wrap">
-        <div class="progress-bar">
-          <div class="progress-step active"></div>
-          <div class="progress-step"></div>
-          <div class="progress-step"></div>
-          <div class="progress-step"></div>
-        </div>
-        <div class="progress-info">
-          <span class="step-label">Privacidad</span>
-          <span class="step-of">1 de 4</span>
-        </div>
-      </div>
-      <p class="screen-title">Aviso de privacidad</p>
-      <div class="privacy-box">
-        <h4>Tratamiento de datos personales</h4>
-        <p>Con fundamento en la Ley Federal de Protección de Datos Personales en Posesión de los Particulares (LFPDPPP), le informamos que los datos recabados serán utilizados exclusivamente para fines de preinscripción y control escolar.</p>
-        <h4>Datos recabados</h4>
-        <p>Nombre completo, fecha de nacimiento, CURP, domicilio, grado escolar, escuela de procedencia, promedio de egreso, y datos de contacto del tutor.</p>
-        <h4>Finalidad</h4>
-        <p>Integración del expediente escolar, elaboración de listas de candidatos, análisis de selección por proximidad geográfica y aprovechamiento académico.</p>
-        <h4>Responsable</h4>
-        <p>Plantel educativo de nivel medio superior. Los datos no serán transferidos a terceros sin consentimiento previo, salvo disposición legal. Puede ejercer sus derechos ARCO escribiendo al correo oficial del plantel.</p>
-      </div>
-      <div class="checkbox-card" onclick="togglePriv()">
-        <input type="checkbox" id="privCheck" onchange="togglePrivBtn()" onclick="event.stopPropagation()">
-        <label for="privCheck">He leído y acepto el aviso de privacidad y el tratamiento de mis datos personales.</label>
-      </div>
-      <div style="margin-top:auto;">
-        <button class="btn-primary" id="privBtn" onclick="go(2)" disabled>Aceptar y continuar</button>
-      </div>
-    </div>
-
-    <!-- S2: ¿QUIÉN LLENA? -->
-    <div id="s2" class="screen hidden">
-      <div class="progress-wrap">
-        <div class="progress-bar">
-          <div class="progress-step done"></div>
-          <div class="progress-step active"></div>
-          <div class="progress-step"></div>
-          <div class="progress-step"></div>
-        </div>
-        <div class="progress-info">
-          <span class="step-label">Solicitante</span>
-          <span class="step-of">2 de 4</span>
-        </div>
-      </div>
-      <p class="screen-title">¿Quién realiza el registro?</p>
-      <p class="screen-sub">Esto determina qué campos se solicitarán.</p>
-      <button class="tipo-btn" id="t1" onclick="selectTipo(1)">
-        <div class="tipo-icon-wrap"><i class="ti ti-users"></i></div>
-        <div>
-          <span class="tipo-strong">Padre / Madre / Tutor</span>
-          <span class="tipo-span">Registras los datos de tu hijo/a o tutorado/a</span>
-        </div>
-      </button>
-      <button class="tipo-btn" id="t2" onclick="selectTipo(2)">
-        <div class="tipo-icon-wrap"><i class="ti ti-user"></i></div>
-        <div>
-          <span class="tipo-strong">Alumno (menor de edad)</span>
-          <span class="tipo-span">El alumno llena el formulario, pero se requieren datos del tutor</span>
-        </div>
-      </button>
-      <button class="tipo-btn" id="t3" onclick="selectTipo(3)">
-        <div class="tipo-icon-wrap"><i class="ti ti-user-check"></i></div>
-        <div>
-          <span class="tipo-strong">Alumno mayor de edad</span>
-          <span class="tipo-span">18 años o más — sin necesidad de datos del tutor</span>
-        </div>
-      </button>
-      <div style="margin-top:auto;">
-        <button class="btn-primary" id="tipoBtn" onclick="go(3)" disabled>Continuar</button>
-      </div>
-    </div>
-
-    <!-- S3: FORMULARIO (sub-pasos) -->
-    <div id="s3" class="screen hidden">
-      <div class="progress-wrap">
-        <div class="progress-bar">
-          <div class="progress-step done"></div>
-          <div class="progress-step done"></div>
-          <div class="progress-step active"></div>
-          <div class="progress-step"></div>
-        </div>
-        <div class="progress-info">
-          <span class="step-label" id="substep-label">Datos personales</span>
-          <span class="step-of">3 de 4</span>
-        </div>
-      </div>
-
-      <!-- SUB-PASO A: Datos personales -->
-      <div id="subA" style="display:flex;flex-direction:column;gap:12px;">
-        <div class="substep-header"><div class="substep-num">A</div><span class="substep-title">Datos personales del alumno</span></div>
-        <div class="form-group">
-          <label class="form-label">Nombre(s) <span class="req">*</span></label>
-          <input class="form-input" id="nombre" type="text" placeholder="Ej. María Elena" oninput="checkSubA()">
-        </div>
-        <div class="grid-2">
-          <div class="form-group">
-            <label class="form-label">Ap. paterno <span class="req">*</span></label>
-            <input class="form-input" id="apPat" type="text" placeholder="García" oninput="checkSubA()">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Ap. materno <span class="req">*</span></label>
-            <input class="form-input" id="apMat" type="text" placeholder="López" oninput="checkSubA()">
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Fecha de nacimiento <span class="req">*</span></label>
-          <div class="grid-3">
-            <select class="form-select" id="fnacDia" onchange="checkSubA()"><option value="">Día</option></select>
-            <select class="form-select" id="fnacMes" onchange="checkSubA()">
-              <option value="">Mes</option>
-              <option value="01">Enero</option><option value="02">Febrero</option>
-              <option value="03">Marzo</option><option value="04">Abril</option>
-              <option value="05">Mayo</option><option value="06">Junio</option>
-              <option value="07">Julio</option><option value="08">Agosto</option>
-              <option value="09">Septiembre</option><option value="10">Octubre</option>
-              <option value="11">Noviembre</option><option value="12">Diciembre</option>
-            </select>
-            <select class="form-select" id="fnacAnio" onchange="checkSubA()"><option value="">Año</option></select>
-          </div>
-        </div>
-        <div class="grid-2">
-          <div class="form-group">
-            <label class="form-label">Sexo <span class="req">*</span></label>
-            <select class="form-select" id="sexo" onchange="checkSubA()">
-              <option value="">—</option>
-              <option>Femenino</option>
-              <option>Masculino</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Grado <span class="req">*</span></label>
-            <select class="form-select" id="grado" onchange="checkSubA()">
-              <option value="">—</option>
-              <option>1° Sem.</option>
-              <option>2° Sem.</option>
-              <option>3° Sem.</option>
-              <option>4° Sem.</option>
-              <option>5° Sem.</option>
-              <option>6° Sem.</option>
-            </select>
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="form-label">CURP <span class="req">*</span></label>
-          <input class="form-input" id="curp" type="text" maxlength="18" placeholder="18 caracteres" style="letter-spacing:2px;font-family:monospace;" oninput="this.value=this.value.toUpperCase();checkSubA()">
-          <span class="curp-hint" id="curpLen">0 / 18 caracteres</span>
-        </div>
-        <div style="margin-top:auto;padding-top:16px;">
-          <button class="btn-primary" id="btnSubA" onclick="goSub('B')" disabled>Siguiente →</button>
-        </div>
-      </div>
-
-      <!-- SUB-PASO B: Procedencia -->
-      <div id="subB" style="display:none;flex-direction:column;gap:12px;">
-        <div class="substep-header"><div class="substep-num">B</div><span class="substep-title">Procedencia escolar</span></div>
-        <div class="form-group">
-          <label class="form-label">Secundaria de egreso <span class="req">*</span></label>
-          <input class="form-input" id="secundaria" type="text" placeholder="Ej. Sec. Técnica No. 12" oninput="checkSubB()">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Promedio de egreso <span class="req">*</span></label>
-          <input class="form-input" id="promedio" type="number" min="6" max="10" step="0.1" placeholder="Ej. 8.5" oninput="checkSubB()">
-          <span class="promedio-note">Escala 6.0 – 10.0</span>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Turno preferido</label>
-          <select class="form-select" id="turno">
-            <option value="">Sin preferencia</option>
-            <option>Matutino</option>
-            <option>Vespertino</option>
-          </select>
-        </div>
-        <div class="btn-row">
-          <button class="btn-secondary" onclick="goSub('A')" style="flex:1;">← Atrás</button>
-          <button class="btn-primary" id="btnSubB" onclick="goSub('C')" disabled style="flex:2;">Siguiente →</button>
-        </div>
-      </div>
-
-      <!-- SUB-PASO C: Domicilio -->
-      <div id="subC" style="display:none;flex-direction:column;gap:12px;">
-        <div class="substep-header"><div class="substep-num">C</div><span class="substep-title">Domicilio del alumno</span></div>
-        <div class="form-group">
-          <label class="form-label">Calle y número <span class="req">*</span></label>
-          <input class="form-input" id="calle" type="text" placeholder="Ej. Av. Reforma 145" oninput="checkSubC()">
-        </div>
-        <div class="grid-2">
-          <div class="form-group">
-            <label class="form-label">Colonia <span class="req">*</span></label>
-            <input class="form-input" id="colonia" type="text" placeholder="Centro" oninput="checkSubC()">
-          </div>
-          <div class="form-group">
-            <label class="form-label">C.P.</label>
-            <input class="form-input" id="cp" type="text" maxlength="5" placeholder="00000">
-          </div>
-        </div>
-        <div class="btn-row">
-          <button class="btn-secondary" onclick="goSub('B')" style="flex:1;">← Atrás</button>
-          <button class="btn-primary" id="btnSubC" onclick="goSubD()" disabled style="flex:2;">Siguiente →</button>
-        </div>
-      </div>
-
-      <!-- SUB-PASO D: Tutor (condicional) -->
-      <div id="subD" style="display:none;flex-direction:column;gap:12px;">
-        <div class="substep-header"><div class="substep-num">D</div><span class="substep-title" id="subD-title">Contacto del padre/tutor</span></div>
-        <div id="subD-fields">
-          <div class="form-group">
-            <label class="form-label">Nombre completo del tutor <span class="req">*</span></label>
-            <input class="form-input" id="nombreTutor" type="text" placeholder="Nombre del padre/tutor" oninput="checkSubD()">
-          </div>
-          <div class="form-group" style="margin-top:10px;">
-            <label class="form-label">Teléfono del padre/tutor <span class="req">*</span></label>
-            <input class="form-input" id="telTutor" type="tel" placeholder="10 dígitos" maxlength="10" oninput="checkSubD()">
-          </div>
-          <div class="form-group" style="margin-top:10px;">
-            <label class="form-label">Correo electrónico</label>
-            <input class="form-input" id="emailTutor" type="email" placeholder="opcional">
-          </div>
-        </div>
-        <div id="subD-mayor" style="display:none;">
-          <div class="form-group">
-            <label class="form-label">Teléfono del alumno <span class="req">*</span></label>
-            <input class="form-input" id="telAlumno" type="tel" placeholder="10 dígitos" maxlength="10" oninput="checkSubD()">
-          </div>
-          <div class="form-group" style="margin-top:10px;">
-            <label class="form-label">Correo electrónico</label>
-            <input class="form-input" id="emailAlumno" type="email" placeholder="opcional">
-          </div>
-        </div>
-        <div class="btn-row">
-          <button class="btn-secondary" onclick="goSub('C')" style="flex:1;">← Atrás</button>
-          <button class="btn-primary" id="btnSubD" onclick="go(4)" disabled style="flex:2;">Revisar datos →</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- S4: REVISIÓN -->
-    <div id="s4" class="screen hidden">
-      <div class="progress-wrap">
-        <div class="progress-bar">
-          <div class="progress-step done"></div>
-          <div class="progress-step done"></div>
-          <div class="progress-step done"></div>
-          <div class="progress-step active"></div>
-        </div>
-        <div class="progress-info">
-          <span class="step-label">Confirmar</span>
-          <span class="step-of">4 de 4</span>
-        </div>
-      </div>
-      <p class="screen-title">Confirma tus datos</p>
-      <p class="screen-sub">Revisa antes de enviar. Podrás editar si algo no está correcto.</p>
-
-      <div class="review-section">
-        <div class="review-section-header">Datos personales</div>
-        <div class="review-row"><span class="r-key">Nombre</span><span class="r-val" id="r-nombre">—</span></div>
-        <div class="review-row"><span class="r-key">Fecha de nac.</span><span class="r-val" id="r-fnac">—</span></div>
-        <div class="review-row"><span class="r-key">Sexo</span><span class="r-val" id="r-sexo">—</span></div>
-        <div class="review-row"><span class="r-key">CURP</span><span class="r-val" id="r-curp" style="font-family:monospace;font-size:11px;letter-spacing:1px;">—</span></div>
-        <div class="review-row"><span class="r-key">Grado</span><span class="r-val" id="r-grado">—</span></div>
-      </div>
-      <div class="review-section">
-        <div class="review-section-header">Procedencia</div>
-        <div class="review-row"><span class="r-key">Secundaria</span><span class="r-val" id="r-sec">—</span></div>
-        <div class="review-row"><span class="r-key">Promedio</span><span class="r-val" id="r-prom">—</span></div>
-        <div class="review-row"><span class="r-key">Turno pref.</span><span class="r-val" id="r-turno">—</span></div>
-      </div>
-      <div class="review-section">
-        <div class="review-section-header">Domicilio</div>
-        <div class="review-row"><span class="r-key">Dirección</span><span class="r-val" id="r-dir">—</span></div>
-      </div>
-      <div class="review-section">
-        <div class="review-section-header" id="r-contact-header">Contacto</div>
-        <div class="review-row" id="r-tutor-row"><span class="r-key">Tutor</span><span class="r-val" id="r-tutor">—</span></div>
-        <div class="review-row"><span class="r-key">Teléfono</span><span class="r-val" id="r-tel">—</span></div>
-      </div>
-
-      <div class="btn-row">
-        <button class="btn-secondary" onclick="backToForm()" style="flex:1;">Editar</button>
-        <button class="btn-primary" onclick="go(5)" style="flex:2;">Enviar</button>
-      </div>
-    </div>
-
-    <!-- S5: ÉXITO -->
-    <div id="s5" class="screen hidden">
-      <div class="success-hero">
-        <div class="success-circle"><i class="ti ti-check"></i></div>
-        <p class="screen-title">¡Preinscripción enviada!</p>
-        <p class="screen-sub" style="margin-top:8px;">Recibimos tu solicitud correctamente. El plantel te contactará para confirmar tu lugar.</p>
-      </div>
-      <div class="folio-box">
-        <div class="folio-label">Número de folio</div>
-        <div class="folio-num" id="folioNum">PRE-2026-0000</div>
-        <div class="folio-label" style="margin-top:6px;">Guárdalo para seguimiento</div>
-      </div>
-      <div class="info-banner">
-        <i class="ti ti-info-circle"></i>
-        <p>La selección considera promedio de egreso y proximidad al plantel. Recibirás respuesta por el contacto registrado.</p>
-      </div>
-      <button class="btn-csv" onclick="descargarCSV()">
-        <i class="ti ti-file-spreadsheet"></i>Descargar comprobante (CSV)
-      </button>
-      <button class="btn-secondary" onclick="reiniciar()">Nueva preinscripción</button>
-    </div>
-
+ <div class="phone">
+  <div class="status-bar"><span>9:41</span><span><i class="ti ti-wifi"></i> <i class="ti ti-battery-2"></i></span></div>
+  <div class="app-header" id="header">
+   <button class="back-btn" id="back-btn" onclick="goBack()" style="display:none"><i class="ti ti-arrow-left"></i></button>
+   <div class="logo-circle"><i class="ti ti-school"></i></div>
+   <div class="header-text">
+    <h1 id="header-title">Preinscripción</h1>
+    <p id="header-sub">Ciclo escolar 2026–2027</p>
+   </div>
+   <button class="director-btn" onclick="abrirDirector()"><i class="ti ti-lock" style="font-size:11px;"></i> Director</button>
   </div>
 
-  <!-- MINI ESTADÍSTICAS (fuera del teléfono, simula panel admin) -->
-  <div style="width:375px;">
-    <p style="font-size:11px;font-weight:700;color:#9DAABF;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px;text-align:center;">Vista previa — Panel administrador</p>
-    <div class="stats-row">
-      <div class="stat-card"><div class="stat-num" id="stat-total">0</div><div class="stat-label">Registros</div></div>
-      <div class="stat-card"><div class="stat-num" id="stat-prom">—</div><div class="stat-label">Prom. promedio</div></div>
-      <div class="stat-card"><div class="stat-num" id="stat-hoy">0</div><div class="stat-label">Hoy</div></div>
-    </div>
-    <button class="btn-csv" style="margin-top:8px;border-radius:12px;" onclick="descargarTodos()">
-      <i class="ti ti-table-export"></i>Exportar todos los registros (CSV)
-    </button>
+  <!-- S0: BIENVENIDA -->
+  <div id="s0" class="screen">
+   <div class="welcome-hero">
+    <div class="welcome-icon"><i class="ti ti-school"></i></div>
+    <p class="screen-title">Bienvenido/a</p>
+    <p class="screen-sub" style="margin-top:6px;">Completa tu preinscripción en minutos desde tu teléfono.</p>
+   </div>
+   <p style="font-size:11px;font-weight:700;color:#9DAABF;text-transform:uppercase;letter-spacing:0.8px;">Necesitarás tener a la mano</p>
+   <div class="checklist">
+    <div class="checklist-item"><i class="ti ti-check"></i>Nombre completo del alumno y CURP</div>
+    <div class="checklist-item"><i class="ti ti-check"></i>Fecha de nacimiento</div>
+    <div class="checklist-item"><i class="ti ti-check"></i>Escuela de procedencia y promedio</div>
+    <div class="checklist-item"><i class="ti ti-check"></i>Dirección del alumno</div>
+    <div class="checklist-item"><i class="ti ti-check"></i>Datos de ambos padres o tutor</div>
+   </div>
+   <div style="margin-top:auto;">
+    <button class="btn-primary" onclick="go(1)">Comenzar preinscripción →</button>
+   </div>
   </div>
-</div>
+
+  <!-- S1: AVISO PRIVACIDAD -->
+  <div id="s1" class="screen hidden">
+   <div class="progress-wrap">
+    <div class="progress-bar"><div class="progress-step active"></div><div class="progress-step"></div><div class="progress-step"></div><div class="progress-step"></div></div>
+    <div class="progress-info"><span class="step-label">Privacidad</span><span class="step-of">1 de 4</span></div>
+   </div>
+   <p class="screen-title">Aviso de privacidad</p>
+   <div class="privacy-box">
+    <h4>Tratamiento de datos personales</h4>
+    <p>Con fundamento en la Ley Federal de Protección de Datos Personales en Posesión de los Particulares (LFPDPPP), le informamos que los datos recabados serán utilizados exclusivamente para fines de preinscripción y control escolar.</p>
+    <h4>Datos recabados</h4>
+    <p>Nombre completo, fecha de nacimiento, CURP, domicilio, grado escolar, escuela de procedencia, promedio de egreso, y datos de contacto de padre, madre y/o tutor.</p>
+    <h4>Finalidad</h4>
+    <p>Integración del expediente escolar, elaboración de listas de candidatos, análisis de selección por proximidad geográfica y aprovechamiento académico.</p>
+    <h4>Responsable</h4>
+    <p>Plantel educativo de nivel básico y medio superior. Los datos no serán transferidos a terceros sin consentimiento previo, salvo disposición legal.</p>
+   </div>
+   <div class="checkbox-card" id="privCard">
+    <input type="checkbox" id="privCheck" onchange="togglePriv()">
+    <label for="privCheck">He leído y acepto el aviso de privacidad y el tratamiento de mis datos personales.</label>
+   </div>
+   <div style="margin-top:auto;"><button class="btn-primary" id="privBtn" onclick="go(2)" disabled>Aceptar y continuar</button></div>
+  </div>
+
+  <!-- S2: ESCUELA -->
+  <div id="s2" class="screen hidden">
+   <div class="progress-wrap">
+    <div class="progress-bar"><div class="progress-step done"></div><div class="progress-step active"></div><div class="progress-step"></div><div class="progress-step"></div></div>
+    <div class="progress-info"><span class="step-label">Escuela</span><span class="step-of">2 de 4</span></div>
+   </div>
+   <p class="screen-title">Selecciona la escuela</p>
+   <p class="screen-sub">Elige el plantel al que deseas preinscribirte.</p>
+   <div id="escuelas-lista" style="display:flex;flex-direction:column;gap:10px;"></div>
+   <div style="margin-top:auto;"><button class="btn-primary" id="escuelaBtn" onclick="go(3)" disabled>Continuar →</button></div>
+  </div>
+
+  <!-- S3: TIPO SOLICITANTE -->
+  <div id="s3" class="screen hidden">
+   <div class="progress-wrap">
+    <div class="progress-bar"><div class="progress-step done"></div><div class="progress-step done"></div><div class="progress-step active"></div><div class="progress-step"></div></div>
+    <div class="progress-info"><span class="step-label">Solicitante</span><span class="step-of">3 de 4</span></div>
+   </div>
+   <p class="screen-title">¿Quién realiza el registro?</p>
+   <p class="screen-sub">Esto determina qué campos se solicitarán.</p>
+   <button class="tipo-btn" id="t1" onclick="selectTipo(1)">
+    <div class="tipo-icon-wrap"><i class="ti ti-users"></i></div>
+    <div><span class="tipo-strong">Padre / Madre / Tutor</span><span class="tipo-span">Registras los datos de tu hijo/a o tutorado/a</span></div>
+   </button>
+   <button class="tipo-btn" id="t2" onclick="selectTipo(2)">
+    <div class="tipo-icon-wrap"><i class="ti ti-user"></i></div>
+    <div><span class="tipo-strong">Alumno menor de edad</span><span class="tipo-span">El alumno llena el formulario — se requieren datos del tutor</span></div>
+   </button>
+   <button class="tipo-btn" id="t3" onclick="selectTipo(3)">
+    <div class="tipo-icon-wrap"><i class="ti ti-user-check"></i></div>
+    <div><span class="tipo-strong">Alumno mayor de edad</span><span class="tipo-span">18 años o más — sin necesidad de datos del tutor</span></div>
+   </button>
+   <div style="margin-top:auto;"><button class="btn-primary" id="tipoBtn" onclick="go(4)" disabled>Continuar →</button></div>
+  </div>
+
+  <!-- S4: FORMULARIO -->
+  <div id="s4" class="screen hidden">
+   <div class="progress-wrap">
+    <div class="progress-bar" id="substep-bar">
+     <div class="progress-step active" id="sb1"></div>
+     <div class="progress-step" id="sb2"></div>
+     <div class="progress-step" id="sb3"></div>
+     <div class="progress-step" id="sb4"></div>
+    </div>
+    <div class="progress-info"><span class="step-label" id="substep-label">Datos personales</span><span class="step-of" id="substep-of">A de 4</span></div>
+   </div>
+   <!-- SUB A -->
+   <div id="subA" style="display:flex;flex-direction:column;gap:12px;">
+    <div class="substep-header"><div class="substep-num">A</div><span class="substep-title">Datos personales</span></div>
+    <div class="form-group"><label class="form-label">Nombre(s) <span class="req">*</span></label><input class="form-input" id="nombre" type="text" placeholder="Ej. María Elena" oninput="checkSubA()"></div>
+    <div class="grid-2">
+     <div class="form-group"><label class="form-label">Ap. paterno <span class="req">*</span></label><input class="form-input" id="apPat" type="text" placeholder="García" oninput="checkSubA()"></div>
+     <div class="form-group"><label class="form-label">Ap. materno <span class="req">*</span></label><input class="form-input" id="apMat" type="text" placeholder="López" oninput="checkSubA()"></div>
+    </div>
+    <div class="form-group">
+     <label class="form-label">Fecha de nacimiento <span class="req">*</span></label>
+     <div class="grid-3">
+      <select class="form-select" id="fnacDia" onchange="checkSubA()"><option value="">Día</option></select>
+      <select class="form-select" id="fnacMes" onchange="checkSubA()">
+       <option value="">Mes</option><option value="01">Enero</option><option value="02">Febrero</option><option value="03">Marzo</option><option value="04">Abril</option><option value="05">Mayo</option><option value="06">Junio</option><option value="07">Julio</option><option value="08">Agosto</option><option value="09">Septiembre</option><option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
+      </select>
+      <select class="form-select" id="fnacAnio" onchange="checkSubA()"><option value="">Año</option></select>
+     </div>
+    </div>
+    <div class="grid-2">
+     <div class="form-group"><label class="form-label">Sexo <span class="req">*</span></label><select class="form-select" id="sexo" onchange="checkSubA()"><option value="">—</option><option>Femenino</option><option>Masculino</option></select></div>
+     <div class="form-group"><label class="form-label">Grado <span class="req">*</span></label><select class="form-select" id="grado" onchange="checkSubA()"><option value="">—</option></select></div>
+    </div>
+    <div class="form-group"><label class="form-label">CURP <span class="req">*</span></label><input class="form-input" id="curp" type="text" maxlength="18" placeholder="18 caracteres" style="letter-spacing:2px;font-family:monospace;" oninput="this.value=this.value.toUpperCase();checkSubA()"><span class="field-hint" id="curpLen">0 / 18 caracteres</span></div>
+    <div style="margin-top:auto;"><button class="btn-primary" id="btnSubA" onclick="goSub('B')" disabled>Siguiente →</button></div>
+   </div>
+   <!-- SUB B -->
+   <div id="subB" style="display:none;flex-direction:column;gap:12px;">
+    <div class="substep-header"><div class="substep-num">B</div><span class="substep-title">Procedencia escolar</span></div>
+    <div class="form-group"><label class="form-label" id="label-procedencia">Escuela de procedencia <span class="req">*</span></label><input class="form-input" id="secundaria" type="text" placeholder="Ej. Sec. Técnica No. 12" oninput="checkSubB()"></div>
+    <div class="form-group"><label class="form-label">Promedio de egreso <span class="req">*</span></label><input class="form-input" id="promedio" type="number" min="6" max="10" step="0.1" placeholder="Ej. 8.5" oninput="checkSubB()"><span class="field-hint">Escala 6.0 – 10.0</span></div>
+    <div class="form-group"><label class="form-label">Turno preferido</label><select class="form-select" id="turno"><option value="">Sin preferencia</option><option>Matutino</option><option>Vespertino</option></select></div>
+    <div class="btn-row"><button class="btn-secondary" onclick="goSub('A')" style="flex:1;">← Atrás</button><button class="btn-primary" id="btnSubB" onclick="goSub('C')" disabled style="flex:2;">Siguiente →</button></div>
+   </div>
+   <!-- SUB C -->
+   <div id="subC" style="display:none;flex-direction:column;gap:12px;">
+    <div class="substep-header"><div class="substep-num">C</div><span class="substep-title">Domicilio del alumno</span></div>
+    <div class="form-group"><label class="form-label">Calle y número <span class="req">*</span></label><input class="form-input" id="calle" type="text" placeholder="Ej. Av. Reforma 145" oninput="checkSubC()"></div>
+    <div class="grid-2">
+     <div class="form-group"><label class="form-label">Colonia <span class="req">*</span></label><input class="form-input" id="colonia" type="text" placeholder="Centro" oninput="checkSubC()"></div>
+     <div class="form-group"><label class="form-label">C.P.</label><input class="form-input" id="cp" type="text" maxlength="5" placeholder="00000"></div>
+    </div>
+    <div class="btn-row"><button class="btn-secondary" onclick="goSub('B')" style="flex:1;">← Atrás</button><button class="btn-primary" id="btnSubC" onclick="goSub('D')" disabled style="flex:2;">Siguiente →</button></div>
+   </div>
+   <!-- SUB D -->
+   <div id="subD" style="display:none;flex-direction:column;gap:12px;">
+    <div class="substep-header"><div class="substep-num">D</div><span class="substep-title" id="subD-title">Contacto familiar</span></div>
+    <div id="subD-familia">
+     <div class="section-divider"><span>Padre</span></div>
+     <div style="display:flex;flex-direction:column;gap:10px;margin-top:4px;">
+      <div class="form-group"><label class="form-label">Nombre del padre <span class="req">*</span></label><input class="form-input" id="nombrePadre" type="text" placeholder="Nombre completo" oninput="checkSubD()"></div>
+      <div class="form-group"><label class="form-label">Teléfono del padre <span class="req">*</span></label><input class="form-input" id="telPadre" type="tel" maxlength="10" placeholder="10 dígitos" oninput="checkSubD()"></div>
+     </div>
+     <div class="section-divider" style="margin-top:12px;"><span>Madre</span></div>
+     <div style="display:flex;flex-direction:column;gap:10px;margin-top:4px;">
+      <div class="form-group"><label class="form-label">Nombre de la madre <span class="req">*</span></label><input class="form-input" id="nombreMadre" type="text" placeholder="Nombre completo" oninput="checkSubD()"></div>
+      <div class="form-group"><label class="form-label">Teléfono de la madre <span class="req">*</span></label><input class="form-input" id="telMadre" type="tel" maxlength="10" placeholder="10 dígitos" oninput="checkSubD()"></div>
+     </div>
+     <div class="section-divider" style="margin-top:12px;"><span>Contacto adicional</span></div>
+     <div style="margin-top:4px;">
+      <div class="form-group"><label class="form-label">Correo electrónico</label><input class="form-input" id="emailFam" type="email" placeholder="opcional"></div>
+     </div>
+    </div>
+    <div id="subD-mayor" style="display:none;flex-direction:column;gap:10px;">
+     <div class="form-group"><label class="form-label">Teléfono del alumno <span class="req">*</span></label><input class="form-input" id="telAlumno" type="tel" maxlength="10" placeholder="10 dígitos" oninput="checkSubD()"></div>
+     <div class="form-group"><label class="form-label">Correo electrónico</label><input class="form-input" id="emailAlumno" type="email" placeholder="opcional"></div>
+    </div>
+    <div class="btn-row"><button class="btn-secondary" onclick="goSub('C')" style="flex:1;">← Atrás</button><button class="btn-primary" id="btnSubD" onclick="go(5)" disabled style="flex:2;">Revisar →</button></div>
+   </div>
+  </div>
+
+  <!-- S5: REVISIÓN -->
+  <div id="s5" class="screen hidden">
+   <p class="screen-title">Confirma tus datos</p>
+   <p class="screen-sub">Revisa antes de enviar.</p>
+   <div class="review-section">
+    <div class="review-section-header">Escuela</div>
+    <div class="review-row"><span class="r-key">Plantel</span><span class="r-val" id="r-escuela">—</span></div>
+    <div class="review-row"><span class="r-key">Nivel</span><span class="r-val" id="r-nivel">—</span></div>
+    <div class="review-row"><span class="r-key">Grado</span><span class="r-val" id="r-grado">—</span></div>
+   </div>
+   <div class="review-section">
+    <div class="review-section-header">Datos personales</div>
+    <div class="review-row"><span class="r-key">Nombre</span><span class="r-val" id="r-nombre">—</span></div>
+    <div class="review-row"><span class="r-key">Fecha de nac.</span><span class="r-val" id="r-fnac">—</span></div>
+    <div class="review-row"><span class="r-key">Sexo</span><span class="r-val" id="r-sexo">—</span></div>
+    <div class="review-row"><span class="r-key">CURP</span><span class="r-val" id="r-curp" style="font-family:monospace;font-size:11px;letter-spacing:1px;">—</span></div>
+   </div>
+   <div class="review-section">
+    <div class="review-section-header">Procedencia</div>
+    <div class="review-row"><span class="r-key" id="r-sec-label">Escuela anterior</span><span class="r-val" id="r-sec">—</span></div>
+    <div class="review-row"><span class="r-key">Promedio</span><span class="r-val" id="r-prom">—</span></div>
+    <div class="review-row"><span class="r-key">Turno pref.</span><span class="r-val" id="r-turno">—</span></div>
+   </div>
+   <div class="review-section">
+    <div class="review-section-header">Domicilio</div>
+    <div class="review-row"><span class="r-key">Dirección</span><span class="r-val" id="r-dir">—</span></div>
+   </div>
+   <div class="review-section">
+    <div class="review-section-header" id="r-contacto-header">Contacto familiar</div>
+    <div class="review-row" id="r-padre-row"><span class="r-key">Padre</span><span class="r-val" id="r-padre">—</span></div>
+    <div class="review-row" id="r-madre-row"><span class="r-key">Madre</span><span class="r-val" id="r-madre">—</span></div>
+    <div class="review-row" id="r-tel-row"><span class="r-key">Teléfono</span><span class="r-val" id="r-tel">—</span></div>
+   </div>
+   <div class="btn-row">
+    <button class="btn-secondary" onclick="go(4);goSub('A')" style="flex:1;">Editar</button>
+    <button class="btn-primary" id="btnEnviar" onclick="enviar()" style="flex:2;">Enviar</button>
+   </div>
+  </div>
+
+  <!-- S6: ÉXITO -->
+  <div id="s6" class="screen hidden" style="text-align:center;">
+   <div style="margin-top:10px;">
+    <div class="success-circle"><i class="ti ti-check"></i></div>
+    <p class="screen-title" style="margin-top:12px;">¡Preinscripción enviada!</p>
+    <p class="screen-sub" style="margin-top:7px;">Recibimos tu solicitud correctamente. El plantel te contactará para confirmar tu lugar.</p>
+   </div>
+   <div class="folio-box">
+    <div class="folio-label">Número de folio</div>
+    <div class="folio-num" id="folioNum">PRE-2026-0000</div>
+    <div class="folio-label" style="margin-top:5px;">Guárdalo para seguimiento</div>
+   </div>
+   <div class="info-banner" style="text-align:left;">
+    <i class="ti ti-info-circle"></i>
+    <p>La selección considera promedio de egreso y proximidad al plantel. Recibirás respuesta por el contacto registrado.</p>
+   </div>
+   <button class="btn-secondary" onclick="reiniciar()">Nueva preinscripción</button>
+  </div>
+
+ </div><!-- /phone -->
+
+ <!-- LOADING -->
+ <div class="loading-overlay hidden" id="loadingOverlay">
+  <div class="spinner"></div>
+  <p class="loading-text" id="loadingText">Cargando...</p>
+ </div>
+
+ <!-- TOAST -->
+ <div class="toast" id="toast"></div>
+
+ <!-- PANEL DIRECTOR -->
+ <div class="dir-overlay hidden" id="dirOverlay">
+  <div class="dir-modal">
+   <div class="dir-modal-header">
+    <h2><i class="ti ti-shield-lock" style="margin-right:6px;"></i>Panel Director</h2>
+    <button class="dir-close" onclick="cerrarDirector()"><i class="ti ti-x"></i></button>
+   </div>
+   <div class="dir-body">
+    <div id="dirLogin" class="login-box" style="margin:auto 0;">
+     <div class="login-icon"><i class="ti ti-lock"></i></div>
+     <p style="font-size:15px;font-weight:700;color:#0D1F35;">Acceso director</p>
+     <div class="form-group" style="text-align:left;">
+      <label class="form-label">Contraseña</label>
+      <input class="form-input" id="dirPass" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')loginDir()">
+     </div>
+     <p class="login-error" id="loginError">Contraseña incorrecta</p>
+     <button class="btn-primary" onclick="loginDir()">Entrar</button>
+    </div>
+    <div id="dirPanel" style="display:none;flex-direction:column;gap:14px;">
+     <div class="dir-tabs">
+      <button class="dir-tab active" onclick="dirTab('stats')"><i class="ti ti-chart-bar"></i> Resumen</button>
+      <button class="dir-tab" onclick="dirTab('escuelas')"><i class="ti ti-building-school"></i> Escuelas</button>
+      <button class="dir-tab" onclick="dirTab('registros')"><i class="ti ti-list"></i> Registros</button>
+     </div>
+     <!-- STATS -->
+     <div class="dir-section active" id="tab-stats">
+      <div class="stats-row">
+       <div class="stat-card"><div class="stat-num" id="st-total">0</div><div class="stat-label">Registros</div></div>
+       <div class="stat-card"><div class="stat-num" id="st-prom">—</div><div class="stat-label">Prom. avg</div></div>
+       <div class="stat-card"><div class="stat-num" id="st-hoy">0</div><div class="stat-label">Hoy</div></div>
+      </div>
+      <button class="btn-csv" onclick="exportarTodos()"><i class="ti ti-table-export"></i>Exportar todos (CSV)</button>
+      <button class="btn-secondary" onclick="logoutDir()" style="font-size:13px;padding:10px;">Cerrar sesión</button>
+     </div>
+     <!-- ESCUELAS -->
+     <div class="dir-section" id="tab-escuelas">
+      <p style="font-size:13px;font-weight:700;color:#0D1F35;">Agregar escuela</p>
+      <div class="form-group"><label class="form-label">Nombre del plantel</label><input class="form-input" id="nuevaEscuelaNombre" type="text" placeholder="Ej. CBTis No. 41 Ensenada"></div>
+      <div class="form-group"><label class="form-label">Nivel</label>
+       <select class="form-select" id="nuevaEscuelaNivel">
+        <option value="preparatoria">Preparatoria / Bachillerato</option>
+        <option value="secundaria">Secundaria</option>
+       </select>
+      </div>
+      <button class="btn-primary" onclick="agregarEscuela()">Agregar escuela</button>
+      <div style="border-top:1px solid #E4EAF3;padding-top:12px;">
+       <p style="font-size:12px;font-weight:700;color:#9DAABF;text-transform:uppercase;letter-spacing:0.7px;margin-bottom:10px;">Escuelas registradas</p>
+       <div id="dir-escuelas-lista" style="display:flex;flex-direction:column;gap:8px;"></div>
+      </div>
+     </div>
+     <!-- REGISTROS -->
+     <div class="dir-section" id="tab-registros">
+      <div class="form-group"><label class="form-label">Buscar por folio o nombre</label><input class="form-input" id="buscarReg" type="text" placeholder="PRE-2026-..." oninput="renderRegistros()"></div>
+      <div id="dir-registros-lista" style="display:flex;flex-direction:column;gap:8px;"></div>
+     </div>
+    </div>
+   </div>
+  </div>
+ </div>
+
+ <!-- EDIT OVERLAY -->
+ <div class="edit-overlay hidden" id="editOverlay">
+  <div class="edit-modal">
+   <div class="edit-modal-header">
+    <h3 id="editTitle">Editar registro</h3>
+    <button class="dir-close" onclick="cerrarEdit()"><i class="ti ti-x"></i></button>
+   </div>
+   <div class="edit-body" id="editBody"></div>
+  </div>
+ </div>
+
+</div><!-- /phone-wrap -->
 
 <script>
-// ─── ESTADO ───────────────────────────────────────────
+// ═══════════════════════════════════════════════════════
+// SUPABASE
+// ═══════════════════════════════════════════════════════
+const SUPA_URL = 'https://nnprmgisapdipkjtjwzf.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ucHJtZ2lzYXBkaXBranRqd3pmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExMTc4NjksImV4cCI6MjA5NjY5Mzg2OX0.5h1V2jLSdPCivflqB5X6VxFIu4Xy-0yAej0m3JZmgWs';
+const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+// ═══════════════════════════════════════════════════════
+// ESTADO
+// ═══════════════════════════════════════════════════════
 let currentScreen = 0;
 let tipoSelected = 0;
 let currentSub = 'A';
+let escuelaSeleccionada = null;
 let registros = [];
+let escuelas = [];
+let dirAuthed = false;
+let editIdx = null;
 
 const MESES = ['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-
-// ─── INIT ─────────────────────────────────────────────
-(function init() {
-  const diaEl = document.getElementById('fnacDia');
-  for (let d = 1; d <= 31; d++) {
-    const o = document.createElement('option');
-    o.value = String(d).padStart(2,'0');
-    o.textContent = d;
-    diaEl.appendChild(o);
-  }
-  const anioEl = document.getElementById('fnacAnio');
-  for (let y = 2015; y >= 1990; y--) {
-    const o = document.createElement('option');
-    o.value = y; o.textContent = y;
-    anioEl.appendChild(o);
-  }
-  actualizarStats();
-})();
-
-// ─── NAVEGACIÓN PRINCIPAL ─────────────────────────────
-const HEADERS = [
-  {title:'Preinscripción', sub:'Ciclo escolar 2026–2027', back:false},
-  {title:'Aviso de privacidad', sub:'Paso 1 de 4', back:true},
-  {title:'Solicitante', sub:'Paso 2 de 4', back:true},
-  {title:'Formulario', sub:'Paso 3 de 4', back:true},
-  {title:'Confirmar datos', sub:'Paso 4 de 4', back:true},
-  {title:'Registro enviado', sub:'Preinscripción completa', back:false},
+const HEADERS_CFG = [
+ {title:'Preinscripción',sub:'Ciclo escolar 2026–2027',back:false},
+ {title:'Aviso de privacidad',sub:'Paso 1 de 4',back:true},
+ {title:'Selecciona la escuela',sub:'Paso 2 de 4',back:true},
+ {title:'Solicitante',sub:'Paso 3 de 4',back:true},
+ {title:'Formulario',sub:'Paso 4 de 4',back:true},
+ {title:'Confirmar datos',sub:'Revisión',back:true},
+ {title:'Registro enviado',sub:'Preinscripción completa',back:false},
 ];
 
-function go(n) {
-  document.getElementById('s'+currentScreen).classList.add('hidden');
-  currentScreen = n;
-  document.getElementById('s'+n).classList.remove('hidden');
-  const h = HEADERS[n];
-  document.getElementById('header-title').textContent = h.title;
-  document.getElementById('header-sub').textContent = h.sub;
-  document.getElementById('back-btn').style.display = h.back ? 'flex' : 'none';
-  if (n === 3) { goSub('A'); }
-  if (n === 4) fillReview();
-  if (n === 5) { generarFolio(); guardarRegistro(); }
+// ═══════════════════════════════════════════════════════
+// UI HELPERS
+// ═══════════════════════════════════════════════════════
+function showLoading(txt='Cargando...'){
+ document.getElementById('loadingText').textContent=txt;
+ document.getElementById('loadingOverlay').classList.remove('hidden');
+}
+function hideLoading(){document.getElementById('loadingOverlay').classList.add('hidden');}
+function showToast(msg,ms=2500){
+ const t=document.getElementById('toast');
+ t.textContent=msg;t.classList.add('show');
+ setTimeout(()=>t.classList.remove('show'),ms);
 }
 
-function goBack() {
-  if (currentScreen === 3) {
-    const order = ['A','B','C','D'];
-    const idx = order.indexOf(currentSub);
-    if (idx > 0) { goSub(order[idx-1]); return; }
-    go(2); return;
-  }
-  if (currentScreen > 0) go(currentScreen - 1);
+// ═══════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════
+(function init(){
+ const dEl=document.getElementById('fnacDia');
+ for(let d=1;d<=31;d++){const o=document.createElement('option');o.value=String(d).padStart(2,'0');o.textContent=d;dEl.appendChild(o);}
+ const aEl=document.getElementById('fnacAnio');
+ for(let y=2015;y>=1990;y--){const o=document.createElement('option');o.value=y;o.textContent=y;aEl.appendChild(o);}
+})();
+
+// ═══════════════════════════════════════════════════════
+// NAVEGACIÓN
+// ═══════════════════════════════════════════════════════
+function go(n){
+ document.getElementById('s'+currentScreen).classList.add('hidden');
+ currentScreen=n;
+ document.getElementById('s'+n).classList.remove('hidden');
+ const h=HEADERS_CFG[n];
+ document.getElementById('header-title').textContent=h.title;
+ document.getElementById('header-sub').textContent=h.sub;
+ document.getElementById('back-btn').style.display=h.back?'flex':'none';
+ if(n===2) cargarEscuelasUsuario();
+ if(n===4) goSub('A');
+ if(n===5) fillReview();
 }
 
-// ─── SUB-PASOS FORMULARIO ─────────────────────────────
-function goSub(sub) {
-  ['A','B','C','D'].forEach(s => {
-    const el = document.getElementById('sub'+s);
-    if (el) el.style.display = 'none';
-  });
-  currentSub = sub;
-  const subLabels = {A:'Datos personales', B:'Procedencia escolar', C:'Domicilio', D:'Contacto'};
-  document.getElementById('substep-label').textContent = subLabels[sub];
-  const el = document.getElementById('sub'+sub);
-  el.style.display = 'flex';
-  el.style.flexDirection = 'column';
-  el.style.gap = '12px';
+function goBack(){
+ if(currentScreen===4){
+  const order=['A','B','C','D'];
+  const idx=order.indexOf(currentSub);
+  if(idx>0){goSub(order[idx-1]);return;}
+  go(3);return;
+ }
+ if(currentScreen>0) go(currentScreen-1);
 }
 
-function goSubD() {
-  // Configurar sub-paso D según tipo
-  const esMayor = tipoSelected === 3;
-  document.getElementById('subD-fields').style.display = esMayor ? 'none' : 'block';
-  document.getElementById('subD-mayor').style.display = esMayor ? 'block' : 'none';
-  document.getElementById('subD-title').textContent = esMayor ? 'Contacto del alumno' : 'Contacto del padre/tutor';
-  document.getElementById('r-tutor-row').style.display = esMayor ? 'none' : 'flex';
+// ═══════════════════════════════════════════════════════
+// ESCUELAS — USUARIO (lee de Supabase)
+// ═══════════════════════════════════════════════════════
+async function cargarEscuelasUsuario(){
+ const lista=document.getElementById('escuelas-lista');
+ lista.innerHTML='<p style="font-size:13px;color:#9DAABF;text-align:center;padding:20px 0;">Cargando escuelas...</p>';
+ document.getElementById('escuelaBtn').disabled=true;
+ const {data,error}=await sb.from('escuelas').select('*').eq('activa',true).order('nombre');
+ if(error||!data||data.length===0){
+  lista.innerHTML='<p style="font-size:13px;color:#9DAABF;text-align:center;padding:20px 0;">No hay escuelas disponibles aún.<br>El director debe configurarlas.</p>';
+  return;
+ }
+ escuelas=data;
+ lista.innerHTML='';
+ escuelaSeleccionada=null;
+ data.forEach(e=>{
+  const div=document.createElement('div');
+  div.className='tipo-btn';
+  div.id='esc-'+e.id;
+  div.onclick=()=>seleccionarEscuela(e);
+  div.innerHTML=`<div class="tipo-icon-wrap"><i class="ti ti-building-school"></i></div>
+   <div><span class="tipo-strong">${e.nombre}</span>
+   <span class="tipo-span">${e.nivel==='preparatoria'?'Preparatoria / Bachillerato':'Secundaria'}</span></div>`;
+  lista.appendChild(div);
+ });
+}
+
+function seleccionarEscuela(e){
+ escuelaSeleccionada=e;
+ document.querySelectorAll('#escuelas-lista .tipo-btn').forEach(b=>b.classList.remove('selected'));
+ document.getElementById('esc-'+e.id).classList.add('selected');
+ document.getElementById('escuelaBtn').disabled=false;
+ const gradoEl=document.getElementById('grado');
+ gradoEl.innerHTML='<option value="">—</option>';
+ if(e.nivel==='preparatoria'){
+  ['1° Semestre','2° Semestre','3° Semestre','4° Semestre','5° Semestre','6° Semestre'].forEach(g=>{const o=document.createElement('option');o.textContent=g;gradoEl.appendChild(o);});
+ } else {
+  ['1° Grado','2° Grado','3° Grado'].forEach(g=>{const o=document.createElement('option');o.textContent=g;gradoEl.appendChild(o);});
+ }
+ const anioEl=document.getElementById('fnacAnio');
+ const anioActual=anioEl.value;
+ anioEl.innerHTML='<option value="">Año</option>';
+ const hasta=e.nivel==='preparatoria'?2012:2015;
+ const desde=e.nivel==='preparatoria'?1990:1995;
+ for(let y=hasta;y>=desde;y--){const o=document.createElement('option');o.value=y;o.textContent=y;anioEl.appendChild(o);}
+ if(anioActual) anioEl.value=anioActual;
+ const labelProc=document.getElementById('label-procedencia');
+ const inputProc=document.getElementById('secundaria');
+ if(e.nivel==='preparatoria'){
+  labelProc.innerHTML='Secundaria de egreso <span class="req">*</span>';
+  inputProc.placeholder='Ej. Sec. Técnica No. 12';
+ } else {
+  labelProc.innerHTML='Primaria de egreso <span class="req">*</span>';
+  inputProc.placeholder='Ej. Primaria Benito Juárez';
+ }
+ actualizarOpcionesTipo();
+}
+
+// ═══════════════════════════════════════════════════════
+// TIPO SOLICITANTE
+// ═══════════════════════════════════════════════════════
+function selectTipo(n){
+ tipoSelected=n;
+ [1,2,3].forEach(i=>document.getElementById('t'+i).classList.toggle('selected',i===n));
+ document.getElementById('tipoBtn').disabled=false;
+}
+function actualizarOpcionesTipo(){
+ const esSecundaria=escuelaSeleccionada&&escuelaSeleccionada.nivel==='secundaria';
+ document.getElementById('t3').style.display=esSecundaria?'none':'flex';
+ if(esSecundaria&&tipoSelected===3){
+  tipoSelected=0;
+  [1,2,3].forEach(i=>document.getElementById('t'+i).classList.remove('selected'));
+  document.getElementById('tipoBtn').disabled=true;
+ }
+}
+
+// ═══════════════════════════════════════════════════════
+// PRIVACIDAD
+// ═══════════════════════════════════════════════════════
+function togglePriv(){
+ const cb=document.getElementById('privCheck');
+ document.getElementById('privCard').classList.toggle('checked',cb.checked);
+ document.getElementById('privBtn').disabled=!cb.checked;
+}
+
+// ═══════════════════════════════════════════════════════
+// SUB-PASOS
+// ═══════════════════════════════════════════════════════
+function goSub(sub){
+ ['A','B','C','D'].forEach(s=>{
+  const el=document.getElementById('sub'+s);
+  if(el) el.style.display='none';
+ });
+ currentSub=sub;
+ const labels={A:'Datos personales',B:'Procedencia',C:'Domicilio',D:'Contacto'};
+ const subIdx={A:1,B:2,C:3,D:4};
+ document.getElementById('substep-label').textContent=labels[sub];
+ document.getElementById('substep-of').textContent=subIdx[sub]+' de 4';
+ [1,2,3,4].forEach(i=>{
+  document.getElementById('sb'+i).className='progress-step'+(i<subIdx[sub]?' done':i===subIdx[sub]?' active':'');
+ });
+ const el=document.getElementById('sub'+sub);
+ el.style.display='flex';el.style.flexDirection='column';el.style.gap='12px';
+ if(sub==='D'){
+  const esMayor=tipoSelected===3;
+  document.getElementById('subD-familia').style.display=esMayor?'none':'block';
+  document.getElementById('subD-mayor').style.display=esMayor?'flex':'none';
+  document.getElementById('subD-title').textContent=esMayor?'Contacto del alumno':'Contacto familiar';
   checkSubD();
-  goSub('D');
+ }
 }
 
-// ─── PRIVACIDAD ───────────────────────────────────────
-function togglePriv() {
-  const cb = document.getElementById('privCheck');
-  cb.checked = !cb.checked;
-  togglePrivBtn();
+function checkSubA(){
+ const curp=document.getElementById('curp').value;
+ document.getElementById('curpLen').textContent=curp.length+' / 18 caracteres';
+ const ok=document.getElementById('nombre').value.trim()&&document.getElementById('apPat').value.trim()&&document.getElementById('apMat').value.trim()&&document.getElementById('fnacDia').value&&document.getElementById('fnacMes').value&&document.getElementById('fnacAnio').value&&document.getElementById('sexo').value&&document.getElementById('grado').value&&curp.length===18;
+ document.getElementById('btnSubA').disabled=!ok;
 }
-function togglePrivBtn() {
-  document.getElementById('privBtn').disabled = !document.getElementById('privCheck').checked;
+function checkSubB(){
+ const p=parseFloat(document.getElementById('promedio').value);
+ document.getElementById('btnSubB').disabled=!(document.getElementById('secundaria').value.trim()&&!isNaN(p)&&p>=6&&p<=10);
 }
-
-// ─── TIPO DE USUARIO ──────────────────────────────────
-function selectTipo(n) {
-  tipoSelected = n;
-  [1,2,3].forEach(i => document.getElementById('t'+i).classList.toggle('selected', i===n));
-  document.getElementById('tipoBtn').disabled = false;
+function checkSubC(){
+ document.getElementById('btnSubC').disabled=!(document.getElementById('calle').value.trim()&&document.getElementById('colonia').value.trim());
 }
-
-// ─── VALIDACIONES POR SUB-PASO ────────────────────────
-function checkSubA() {
-  const curp = document.getElementById('curp').value;
-  document.getElementById('curpLen').textContent = curp.length + ' / 18 caracteres';
-  const ok = document.getElementById('nombre').value.trim() &&
-    document.getElementById('apPat').value.trim() &&
-    document.getElementById('apMat').value.trim() &&
-    document.getElementById('fnacDia').value &&
-    document.getElementById('fnacMes').value &&
-    document.getElementById('fnacAnio').value &&
-    document.getElementById('sexo').value &&
-    document.getElementById('grado').value &&
-    curp.length === 18;
-  document.getElementById('btnSubA').disabled = !ok;
+function checkSubD(){
+ let ok=false;
+ if(tipoSelected===3){ok=document.getElementById('telAlumno').value.length===10;}
+ else{ok=document.getElementById('nombrePadre').value.trim()&&document.getElementById('telPadre').value.length===10&&document.getElementById('nombreMadre').value.trim()&&document.getElementById('telMadre').value.length===10;}
+ document.getElementById('btnSubD').disabled=!ok;
 }
 
-function checkSubB() {
-  const prom = parseFloat(document.getElementById('promedio').value);
-  const ok = document.getElementById('secundaria').value.trim() &&
-    !isNaN(prom) && prom >= 6 && prom <= 10;
-  document.getElementById('btnSubB').disabled = !ok;
+// ═══════════════════════════════════════════════════════
+// REVIEW
+// ═══════════════════════════════════════════════════════
+function fillReview(){
+ const n=document.getElementById('nombre').value.trim();
+ const ap=document.getElementById('apPat').value.trim();
+ const am=document.getElementById('apMat').value.trim();
+ document.getElementById('r-nombre').textContent=ap+' '+am+', '+n;
+ const dia=document.getElementById('fnacDia').value;
+ const mes=parseInt(document.getElementById('fnacMes').value);
+ const anio=document.getElementById('fnacAnio').value;
+ document.getElementById('r-fnac').textContent=dia+' de '+MESES[mes]+' de '+anio;
+ document.getElementById('r-sexo').textContent=document.getElementById('sexo').value;
+ document.getElementById('r-curp').textContent=document.getElementById('curp').value;
+ document.getElementById('r-escuela').textContent=escuelaSeleccionada?escuelaSeleccionada.nombre:'—';
+ document.getElementById('r-nivel').textContent=escuelaSeleccionada?(escuelaSeleccionada.nivel==='preparatoria'?'Preparatoria':'Secundaria'):'—';
+ document.getElementById('r-grado').textContent=document.getElementById('grado').value;
+ document.getElementById('r-sec').textContent=document.getElementById('secundaria').value;
+ const esPrepa=escuelaSeleccionada&&escuelaSeleccionada.nivel==='preparatoria';
+ document.getElementById('r-sec-label').textContent=esPrepa?'Secundaria':'Primaria';
+ document.getElementById('r-prom').textContent=parseFloat(document.getElementById('promedio').value).toFixed(1);
+ document.getElementById('r-turno').textContent=document.getElementById('turno').value||'Sin preferencia';
+ const cp=document.getElementById('cp').value.trim();
+ document.getElementById('r-dir').textContent=document.getElementById('calle').value.trim()+', Col. '+document.getElementById('colonia').value.trim()+(cp?', C.P. '+cp:'');
+ const esMayor=tipoSelected===3;
+ document.getElementById('r-padre-row').style.display=esMayor?'none':'flex';
+ document.getElementById('r-madre-row').style.display=esMayor?'none':'flex';
+ document.getElementById('r-tel-row').style.display=esMayor?'flex':'none';
+ if(esMayor){
+  document.getElementById('r-contacto-header').textContent='Contacto del alumno';
+  document.getElementById('r-tel').textContent=document.getElementById('telAlumno').value;
+ } else {
+  document.getElementById('r-contacto-header').textContent='Contacto familiar';
+  document.getElementById('r-padre').textContent=document.getElementById('nombrePadre').value+' · '+document.getElementById('telPadre').value;
+  document.getElementById('r-madre').textContent=document.getElementById('nombreMadre').value+' · '+document.getElementById('telMadre').value;
+ }
 }
 
-function checkSubC() {
-  const ok = document.getElementById('calle').value.trim() &&
-    document.getElementById('colonia').value.trim();
-  document.getElementById('btnSubC').disabled = !ok;
+// ═══════════════════════════════════════════════════════
+// ENVÍO → SUPABASE
+// ═══════════════════════════════════════════════════════
+async function enviar(){
+ const btnEnviar=document.getElementById('btnEnviar');
+ btnEnviar.disabled=true;
+ showLoading('Enviando registro...');
+ const esMayor=tipoSelected===3;
+ // Folio único con timestamp
+ const folio='PRE-2026-'+Date.now().toString().slice(-6);
+ const reg={
+  folio,
+  fecha:new Date().toLocaleDateString('es-MX'),
+  escuela:escuelaSeleccionada?escuelaSeleccionada.nombre:'',
+  nivel:escuelaSeleccionada?(escuelaSeleccionada.nivel==='preparatoria'?'Preparatoria':'Secundaria'):'',
+  nombre:document.getElementById('apPat').value+' '+document.getElementById('apMat').value+', '+document.getElementById('nombre').value,
+  fecha_nac:document.getElementById('fnacDia').value+'/'+document.getElementById('fnacMes').value+'/'+document.getElementById('fnacAnio').value,
+  sexo:document.getElementById('sexo').value,
+  curp:document.getElementById('curp').value,
+  grado:document.getElementById('grado').value,
+  procedencia:document.getElementById('secundaria').value,
+  promedio:parseFloat(document.getElementById('promedio').value),
+  turno:document.getElementById('turno').value||'Sin preferencia',
+  domicilio:document.getElementById('calle').value+', Col. '+document.getElementById('colonia').value+(document.getElementById('cp').value?', C.P. '+document.getElementById('cp').value:''),
+  padre:esMayor?'':document.getElementById('nombrePadre').value,
+  tel_padre:esMayor?'':document.getElementById('telPadre').value,
+  madre:esMayor?'':document.getElementById('nombreMadre').value,
+  tel_madre:esMayor?'':document.getElementById('telMadre').value,
+  tel_alumno:esMayor?document.getElementById('telAlumno').value:'',
+  email:esMayor?document.getElementById('emailAlumno').value:document.getElementById('emailFam').value,
+  tipo_solicitante:tipoSelected===1?'Padre/Tutor':tipoSelected===2?'Alumno menor':'Alumno mayor',
+  foto_habilitada:false,
+ };
+ const {error}=await sb.from('registros').insert(reg);
+ hideLoading();
+ if(error){
+  btnEnviar.disabled=false;
+  showToast('Error al enviar. Intenta de nuevo.');
+  console.error(error);
+  return;
+ }
+ document.getElementById('folioNum').textContent=folio;
+ go(6);
 }
 
-function checkSubD() {
-  let ok = false;
-  if (tipoSelected === 3) {
-    ok = document.getElementById('telAlumno').value.length === 10;
-  } else {
-    ok = document.getElementById('nombreTutor').value.trim() &&
-         document.getElementById('telTutor').value.length === 10;
-  }
-  document.getElementById('btnSubD').disabled = !ok;
+// ═══════════════════════════════════════════════════════
+// REINICIAR
+// ═══════════════════════════════════════════════════════
+function reiniciar(){
+ tipoSelected=0;escuelaSeleccionada=null;
+ [1,2,3].forEach(i=>document.getElementById('t'+i).classList.remove('selected'));
+ document.getElementById('tipoBtn').disabled=true;
+ document.getElementById('privCheck').checked=false;
+ document.getElementById('privCard').classList.remove('checked');
+ document.getElementById('privBtn').disabled=true;
+ document.getElementById('btnEnviar').disabled=false;
+ ['nombre','apPat','apMat','curp','secundaria','promedio','calle','colonia','cp','nombrePadre','telPadre','nombreMadre','telMadre','emailFam','telAlumno','emailAlumno'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+ ['fnacDia','fnacMes','fnacAnio','sexo','grado','turno'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+ document.getElementById('btnSubA').disabled=true;
+ document.getElementById('btnSubB').disabled=true;
+ document.getElementById('btnSubC').disabled=true;
+ go(0);
 }
 
-// ─── REVIEW ───────────────────────────────────────────
-function fillReview() {
-  const n = document.getElementById('nombre').value.trim();
-  const ap = document.getElementById('apPat').value.trim();
-  const am = document.getElementById('apMat').value.trim();
-  document.getElementById('r-nombre').textContent = ap + ' ' + am + ', ' + n;
-  const dia = document.getElementById('fnacDia').value;
-  const mes = parseInt(document.getElementById('fnacMes').value);
-  const anio = document.getElementById('fnacAnio').value;
-  document.getElementById('r-fnac').textContent = dia + ' de ' + MESES[mes] + ' de ' + anio;
-  document.getElementById('r-sexo').textContent = document.getElementById('sexo').value;
-  document.getElementById('r-curp').textContent = document.getElementById('curp').value;
-  document.getElementById('r-grado').textContent = document.getElementById('grado').value;
-  document.getElementById('r-sec').textContent = document.getElementById('secundaria').value;
-  document.getElementById('r-prom').textContent = parseFloat(document.getElementById('promedio').value).toFixed(1);
-  const turno = document.getElementById('turno').value;
-  document.getElementById('r-turno').textContent = turno || 'Sin preferencia';
-  const calle = document.getElementById('calle').value.trim();
-  const col = document.getElementById('colonia').value.trim();
-  const cp = document.getElementById('cp').value.trim();
-  document.getElementById('r-dir').textContent = calle + ', Col. ' + col + (cp ? ', C.P. ' + cp : '');
-  if (tipoSelected === 3) {
-    document.getElementById('r-contact-header').textContent = 'Contacto del alumno';
-    document.getElementById('r-tel').textContent = document.getElementById('telAlumno').value;
-  } else {
-    document.getElementById('r-contact-header').textContent = 'Contacto del padre/tutor';
-    document.getElementById('r-tutor').textContent = document.getElementById('nombreTutor').value;
-    document.getElementById('r-tel').textContent = document.getElementById('telTutor').value;
-  }
+// ═══════════════════════════════════════════════════════
+// DIRECTOR: LOGIN
+// ═══════════════════════════════════════════════════════
+function abrirDirector(){document.getElementById('dirOverlay').classList.remove('hidden');}
+function cerrarDirector(){document.getElementById('dirOverlay').classList.add('hidden');}
+function loginDir(){
+ if(document.getElementById('dirPass').value==='director2026'){
+  dirAuthed=true;
+  document.getElementById('dirLogin').style.display='none';
+  document.getElementById('dirPanel').style.display='flex';
+  document.getElementById('dirPanel').style.flexDirection='column';
+  dirTab('stats');
+ } else {
+  document.getElementById('loginError').style.display='block';
+ }
+}
+function logoutDir(){
+ dirAuthed=false;
+ document.getElementById('dirPass').value='';
+ document.getElementById('loginError').style.display='none';
+ document.getElementById('dirLogin').style.display='flex';
+ document.getElementById('dirPanel').style.display='none';
 }
 
-function backToForm() { go(3); goSub('D'); }
-
-// ─── FOLIO Y GUARDADO ─────────────────────────────────
-function generarFolio() {
-  const n = Math.floor(1000 + Math.random() * 9000);
-  const folio = 'PRE-2026-' + n;
-  document.getElementById('folioNum').textContent = folio;
-  return folio;
+// ═══════════════════════════════════════════════════════
+// DIRECTOR: TABS
+// ═══════════════════════════════════════════════════════
+function dirTab(tab){
+ document.querySelectorAll('.dir-tab').forEach((b,i)=>{b.classList.toggle('active',['stats','escuelas','registros'][i]===tab);});
+ document.querySelectorAll('.dir-section').forEach(s=>s.classList.remove('active'));
+ document.getElementById('tab-'+tab).classList.add('active');
+ if(tab==='stats') cargarStats();
+ if(tab==='escuelas') cargarDirEscuelas();
+ if(tab==='registros') cargarRegistros();
 }
 
-function getDatos() {
-  const esMayor = tipoSelected === 3;
-  return {
-    folio: document.getElementById('folioNum').textContent,
-    fecha_registro: new Date().toLocaleDateString('es-MX'),
-    nombre: document.getElementById('apPat').value + ' ' + document.getElementById('apMat').value + ', ' + document.getElementById('nombre').value,
-    fecha_nac: document.getElementById('fnacDia').value + '/' + document.getElementById('fnacMes').value + '/' + document.getElementById('fnacAnio').value,
-    sexo: document.getElementById('sexo').value,
-    curp: document.getElementById('curp').value,
-    grado: document.getElementById('grado').value,
-    secundaria: document.getElementById('secundaria').value,
-    promedio: document.getElementById('promedio').value,
-    turno: document.getElementById('turno').value || 'Sin preferencia',
-    domicilio: document.getElementById('calle').value + ', Col. ' + document.getElementById('colonia').value + (document.getElementById('cp').value ? ', C.P. '+document.getElementById('cp').value : ''),
-    tutor: esMayor ? '(Mayor de edad)' : document.getElementById('nombreTutor').value,
-    telefono: esMayor ? document.getElementById('telAlumno').value : document.getElementById('telTutor').value,
-    tipo_solicitante: tipoSelected === 1 ? 'Padre/Tutor' : tipoSelected === 2 ? 'Alumno menor' : 'Alumno mayor',
-  };
+// ═══════════════════════════════════════════════════════
+// DIRECTOR: ESCUELAS → SUPABASE
+// ═══════════════════════════════════════════════════════
+async function agregarEscuela(){
+ const nombre=document.getElementById('nuevaEscuelaNombre').value.trim();
+ const nivel=document.getElementById('nuevaEscuelaNivel').value;
+ if(!nombre){showToast('Escribe el nombre del plantel');return;}
+ showLoading('Guardando escuela...');
+ const {error}=await sb.from('escuelas').insert({nombre,nivel,activa:true});
+ hideLoading();
+ if(error){showToast('Error al guardar');return;}
+ document.getElementById('nuevaEscuelaNombre').value='';
+ showToast('Escuela agregada ✓');
+ cargarDirEscuelas();
 }
 
-function guardarRegistro() {
-  registros.push(getDatos());
-  actualizarStats();
+async function cargarDirEscuelas(){
+ const lista=document.getElementById('dir-escuelas-lista');
+ lista.innerHTML='<p style="font-size:13px;color:#9DAABF;text-align:center;">Cargando...</p>';
+ const {data}=await sb.from('escuelas').select('*').order('nombre');
+ if(!data||data.length===0){lista.innerHTML='<p style="font-size:13px;color:#9DAABF;text-align:center;">Sin escuelas aún.</p>';return;}
+ lista.innerHTML='';
+ data.forEach(e=>{
+  const div=document.createElement('div');
+  div.className='escuela-card';
+  div.innerHTML=`
+   <span class="escuela-badge ${e.nivel==='preparatoria'?'badge-prep':'badge-sec'}">${e.nivel==='preparatoria'?'Prep':'Sec'}</span>
+   <span class="escuela-name">${e.nombre}</span>
+   <label class="toggle-switch">
+    <input type="checkbox" ${e.activa?'checked':''} onchange="toggleEscuela(${e.id},this.checked)">
+    <span class="toggle-slider"></span>
+   </label>
+   <button class="btn-sm btn-sm-red" onclick="eliminarEscuela(${e.id})"><i class="ti ti-trash" style="font-size:14px;"></i></button>`;
+  lista.appendChild(div);
+ });
 }
 
-function actualizarStats() {
-  document.getElementById('stat-total').textContent = registros.length;
-  const hoy = new Date().toLocaleDateString('es-MX');
-  document.getElementById('stat-hoy').textContent = registros.filter(r => r.fecha_registro === hoy).length;
-  if (registros.length > 0) {
-    const avg = registros.reduce((a,r) => a + parseFloat(r.promedio||0), 0) / registros.length;
-    document.getElementById('stat-prom').textContent = avg.toFixed(1);
-  } else {
-    document.getElementById('stat-prom').textContent = '—';
-  }
+async function toggleEscuela(id,activa){
+ await sb.from('escuelas').update({activa}).eq('id',id);
+}
+async function eliminarEscuela(id){
+ if(!confirm('¿Eliminar esta escuela?')) return;
+ await sb.from('escuelas').delete().eq('id',id);
+ showToast('Escuela eliminada');
+ cargarDirEscuelas();
 }
 
-// ─── CSV ──────────────────────────────────────────────
-function toCSV(datos) {
-  const cols = ['folio','fecha_registro','nombre','fecha_nac','sexo','curp','grado','secundaria','promedio','turno','domicilio','tutor','telefono','tipo_solicitante'];
-  const header = cols.join(',');
-  const rows = Array.isArray(datos) ? datos : [datos];
-  const lines = rows.map(r => cols.map(c => '"'+(r[c]||'').toString().replace(/"/g,'""')+'"').join(','));
-  return [header, ...lines].join('\n');
+// ═══════════════════════════════════════════════════════
+// DIRECTOR: REGISTROS → SUPABASE
+// ═══════════════════════════════════════════════════════
+async function cargarRegistros(){
+ const lista=document.getElementById('dir-registros-lista');
+ lista.innerHTML='<p style="font-size:13px;color:#9DAABF;text-align:center;padding:12px 0;">Cargando...</p>';
+ const {data}=await sb.from('registros').select('*').order('created_at',{ascending:false});
+ registros=data||[];
+ renderRegistros();
 }
 
-function descargarCSV() {
-  const d = getDatos();
-  const blob = new Blob(['\uFEFF' + toCSV(d)], {type:'text/csv;charset=utf-8'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = d.folio + '.csv';
-  a.click(); URL.revokeObjectURL(url);
+function renderRegistros(){
+ const lista=document.getElementById('dir-registros-lista');
+ const q=(document.getElementById('buscarReg').value||'').toLowerCase();
+ const filtrados=registros.filter(r=>r.folio.toLowerCase().includes(q)||r.nombre.toLowerCase().includes(q));
+ if(filtrados.length===0){lista.innerHTML='<p style="font-size:13px;color:#9DAABF;text-align:center;padding:12px 0;">Sin registros aún.</p>';return;}
+ lista.innerHTML='';
+ filtrados.forEach(r=>{
+  const idx=registros.findIndex(x=>x.id===r.id);
+  const div=document.createElement('div');
+  div.className='reg-card';
+  div.innerHTML=`
+   <div class="reg-card-header">
+    <span class="reg-folio">${r.folio}</span>
+    <span style="font-size:10px;color:#9DAABF;">${r.fecha}</span>
+   </div>
+   <div class="reg-nombre">${r.nombre}</div>
+   <div class="reg-meta">${r.escuela} · ${r.grado} · Prom. ${r.promedio}</div>
+   <div class="reg-actions">
+    <button class="btn-sm btn-sm-blue" onclick="abrirEdit(${idx})"><i class="ti ti-edit" style="font-size:13px;"></i> Editar</button>
+    <button class="btn-sm ${r.foto_habilitada?'btn-sm-orange':'btn-sm-green'}" onclick="toggleFoto(${idx})">
+     <i class="ti ti-${r.foto_habilitada?'camera-off':'camera'}" style="font-size:13px;"></i> ${r.foto_habilitada?'Des. foto':'Habilitar foto'}
+    </button>
+    <button class="btn-sm btn-sm-green" onclick="exportarUno(${idx})"><i class="ti ti-download" style="font-size:13px;"></i></button>
+   </div>
+   ${r.foto_url?`<img src="${r.foto_url}" class="photo-preview" alt="Foto">`:r.foto_habilitada?`<div class="photo-upload" onclick="subirFoto(${idx})"><i class="ti ti-camera"></i><p>Toca para subir foto del alumno</p></div>`:''}`;
+  lista.appendChild(div);
+ });
 }
 
-function descargarTodos() {
-  if (registros.length === 0) { alert('Aún no hay registros guardados.'); return; }
-  const blob = new Blob(['\uFEFF' + toCSV(registros)], {type:'text/csv;charset=utf-8'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = 'preinscripciones_2026.csv';
-  a.click(); URL.revokeObjectURL(url);
+async function toggleFoto(idx){
+ const r=registros[idx];
+ const nueva=!r.foto_habilitada;
+ const update={foto_habilitada:nueva};
+ if(!nueva) update.foto_url=null;
+ const {error}=await sb.from('registros').update(update).eq('id',r.id);
+ if(error){showToast('Error al actualizar');return;}
+ registros[idx].foto_habilitada=nueva;
+ if(!nueva) registros[idx].foto_url=null;
+ renderRegistros();
 }
 
-// ─── REINICIAR ────────────────────────────────────────
-function reiniciar() {
-  tipoSelected = 0;
-  [1,2,3].forEach(i => document.getElementById('t'+i).classList.remove('selected'));
-  document.getElementById('tipoBtn').disabled = true;
-  document.getElementById('privCheck').checked = false;
-  document.getElementById('privBtn').disabled = true;
-  ['nombre','apPat','apMat','curp','secundaria','promedio','calle','colonia','cp','nombreTutor','telTutor','emailTutor','telAlumno','emailAlumno'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.value = '';
-  });
-  ['fnacDia','fnacMes','fnacAnio','sexo','grado','turno'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.value = '';
-  });
-  document.getElementById('btnSubA').disabled = true;
-  document.getElementById('btnSubB').disabled = true;
-  document.getElementById('btnSubC').disabled = true;
-  go(0);
+async function subirFoto(idx){
+ const r=registros[idx];
+ const input=document.createElement('input');
+ input.type='file';input.accept='image/*';
+ input.onchange=async e=>{
+  const file=e.target.files[0];
+  if(!file) return;
+  showLoading('Subiendo foto...');
+  const ext=file.name.split('.').pop();
+  const path=`${r.folio}.${ext}`;
+  const {error:upErr}=await sb.storage.from('fotos-alumnos').upload(path,file,{upsert:true});
+  if(upErr){hideLoading();showToast('Error al subir foto');return;}
+  const {data:urlData}=sb.storage.from('fotos-alumnos').getPublicUrl(path);
+  const foto_url=urlData.publicUrl;
+  await sb.from('registros').update({foto_url}).eq('id',r.id);
+  registros[idx].foto_url=foto_url;
+  hideLoading();
+  showToast('Foto guardada ✓');
+  renderRegistros();
+ };
+ input.click();
+}
+
+// ═══════════════════════════════════════════════════════
+// DIRECTOR: EDICIÓN → SUPABASE
+// ═══════════════════════════════════════════════════════
+function abrirEdit(idx){
+ editIdx=idx;
+ const r=registros[idx];
+ document.getElementById('editTitle').textContent='Editar — '+r.folio;
+ document.getElementById('editBody').innerHTML=`
+  <div class="form-group"><label class="form-label">Nombre</label><input class="form-input" id="e-nombre" value="${r.nombre||''}"></div>
+  <div class="form-group"><label class="form-label">Escuela destino</label><input class="form-input" id="e-escuela" value="${r.escuela||''}"></div>
+  <div class="form-group"><label class="form-label">Grado</label><input class="form-input" id="e-grado" value="${r.grado||''}"></div>
+  <div class="form-group"><label class="form-label">Procedencia</label><input class="form-input" id="e-sec" value="${r.procedencia||''}"></div>
+  <div class="form-group"><label class="form-label">Promedio</label><input class="form-input" id="e-prom" type="number" min="6" max="10" step="0.1" value="${r.promedio||''}"></div>
+  <div class="form-group"><label class="form-label">Domicilio</label><input class="form-input" id="e-dom" value="${r.domicilio||''}"></div>
+  <div class="form-group"><label class="form-label">Padre</label><input class="form-input" id="e-padre" value="${r.padre||''}"></div>
+  <div class="form-group"><label class="form-label">Tel. padre</label><input class="form-input" id="e-telpadre" value="${r.tel_padre||''}"></div>
+  <div class="form-group"><label class="form-label">Madre</label><input class="form-input" id="e-madre" value="${r.madre||''}"></div>
+  <div class="form-group"><label class="form-label">Tel. madre</label><input class="form-input" id="e-telmadre" value="${r.tel_madre||''}"></div>
+  <div style="display:flex;gap:10px;margin-top:4px;">
+   <button class="btn-secondary" onclick="cerrarEdit()" style="flex:1;">Cancelar</button>
+   <button class="btn-primary" onclick="guardarEdit()" style="flex:2;">Guardar</button>
+  </div>`;
+ document.getElementById('editOverlay').classList.remove('hidden');
+}
+
+async function guardarEdit(){
+ const r=registros[editIdx];
+ const cambios={
+  nombre:document.getElementById('e-nombre').value,
+  escuela:document.getElementById('e-escuela').value,
+  grado:document.getElementById('e-grado').value,
+  procedencia:document.getElementById('e-sec').value,
+  promedio:parseFloat(document.getElementById('e-prom').value),
+  domicilio:document.getElementById('e-dom').value,
+  padre:document.getElementById('e-padre').value,
+  tel_padre:document.getElementById('e-telpadre').value,
+  madre:document.getElementById('e-madre').value,
+  tel_madre:document.getElementById('e-telmadre').value,
+ };
+ showLoading('Guardando cambios...');
+ const {error}=await sb.from('registros').update(cambios).eq('id',r.id);
+ hideLoading();
+ if(error){showToast('Error al guardar');return;}
+ Object.assign(registros[editIdx],cambios);
+ cerrarEdit();
+ renderRegistros();
+ showToast('Cambios guardados ✓');
+}
+function cerrarEdit(){document.getElementById('editOverlay').classList.add('hidden');editIdx=null;}
+
+// ═══════════════════════════════════════════════════════
+// STATS → SUPABASE
+// ═══════════════════════════════════════════════════════
+async function cargarStats(){
+ const {data}=await sb.from('registros').select('promedio,fecha');
+ const total=data?data.length:0;
+ document.getElementById('st-total').textContent=total;
+ const hoy=new Date().toLocaleDateString('es-MX');
+ document.getElementById('st-hoy').textContent=data?data.filter(r=>r.fecha===hoy).length:0;
+ if(data&&data.length>0){
+  const avg=data.reduce((a,r)=>a+parseFloat(r.promedio||0),0)/data.length;
+  document.getElementById('st-prom').textContent=avg.toFixed(1);
+ } else {document.getElementById('st-prom').textContent='—';}
+}
+
+// ═══════════════════════════════════════════════════════
+// CSV
+// ═══════════════════════════════════════════════════════
+function toCSV(datos){
+ const cols=['folio','fecha','escuela','nivel','nombre','fecha_nac','sexo','curp','grado','procedencia','promedio','turno','domicilio','padre','tel_padre','madre','tel_madre','tel_alumno','email','tipo_solicitante'];
+ const header=cols.join(',');
+ const rows=Array.isArray(datos)?datos:[datos];
+ const lines=rows.map(r=>cols.map(c=>'"'+(r[c]||'').toString().replace(/"/g,'""')+'"').join(','));
+ return[header,...lines].join('\n');
+}
+function descargarCSV(contenido,nombre){
+ const blob=new Blob(['\uFEFF'+contenido],{type:'text/csv;charset=utf-8'});
+ const url=URL.createObjectURL(blob);
+ const a=document.createElement('a');
+ a.href=url;a.download=nombre;a.click();URL.revokeObjectURL(url);
+}
+function exportarUno(idx){descargarCSV(toCSV(registros[idx]),registros[idx].folio+'.csv');}
+async function exportarTodos(){
+ showLoading('Preparando exportación...');
+ const {data}=await sb.from('registros').select('*').order('created_at',{ascending:true});
+ hideLoading();
+ if(!data||data.length===0){showToast('Sin registros aún');return;}
+ descargarCSV(toCSV(data),'preinscripciones_2026.csv');
 }
 </script>
 </body>
