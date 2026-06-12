@@ -360,9 +360,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
    <div id="subC" style="display:none;flex-direction:column;gap:12px;">
     <div class="substep-header"><div class="substep-num">C</div><span class="substep-title">Domicilio del alumno</span></div>
     <div class="form-group"><label class="form-label">Calle y número <span class="req">*</span></label><input class="form-input" id="calle" type="text" placeholder="Ej. Av. Reforma 145" oninput="checkSubC()"></div>
-    <div class="grid-2">
-     <div class="form-group"><label class="form-label">Colonia <span class="req">*</span></label><input class="form-input" id="colonia" type="text" placeholder="Centro" oninput="checkSubC()"></div>
-     <div class="form-group"><label class="form-label">C.P.</label><input class="form-input" id="cp" type="text" maxlength="5" placeholder="00000"></div>
+    <div class="form-group">
+     <label class="form-label">Código postal <span class="req">*</span></label>
+     <input class="form-input" id="cp" type="text" maxlength="5" inputmode="numeric" placeholder="5 dígitos" oninput="onCPChange()">
+     <span class="field-hint" id="cpHint">Al capturar el C.P. se cargan las colonias de la zona.</span>
+    </div>
+    <div class="form-group" id="coloniaSelectWrap" style="display:none;">
+     <label class="form-label">Colonia <span class="req">*</span></label>
+     <select class="form-select" id="coloniaSelect" onchange="onColoniaChange()"></select>
+    </div>
+    <div class="form-group" id="coloniaTextWrap">
+     <label class="form-label">Colonia <span class="req">*</span></label>
+     <input class="form-input" id="colonia" type="text" placeholder="Ej. Centro" oninput="checkSubC()">
     </div>
     <div class="btn-row"><button class="btn-secondary" onclick="goSub('B')" style="flex:1;">← Atrás</button><button class="btn-primary" id="btnSubC" onclick="goSub('D')" disabled style="flex:2;">Siguiente →</button></div>
    </div>
@@ -577,12 +586,16 @@ const PRIMARIAS_ENSENADA = [
 const SECUNDARIAS_ENSENADA = [
  'Secundaria General No. 1','Secundaria General No. 18 José Vasconcelos','Secundaria Técnica No. 12','Secundaria Estatal No. 51','Secundaria Héctor A. Migoni Fontes','Secundaria Técnica Pesquera','Secundaria General Marco Antonio Bravo Zúñiga','Telesecundaria No. 50','Colegio México de Ensenada (Secundaria)','Secundaria Mtro. Javier M. Zúñiga',
 ];
+const PREPARATORIAS_ENSENADA = [
+ 'CBTis No. 41','CETMAR No. 11','CECyTE BC Plantel Ensenada','COBACH Plantel Ensenada','CONALEP Plantel Ensenada','Preparatoria Federal Lázaro Cárdenas','CETYS Preparatoria Ensenada','Colegio México de Ensenada (Preparatoria)','Instituto Educativo Patria','Preparatoria UABC Ensenada',
+];
 
 // ═══════════════════════════════════════════════
 // ESTADO
 // ═══════════════════════════════════════════════
 let currentScreen=0,tipoSelected=0,currentSub='A',escuelaSeleccionada=null;
 let registros=[],dirAuthed=false,editIdx=null,privacyScrolled=false,consultaReg=null;
+let escuelasActivas=[],cpColonias=[];
 
 const MESES=['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 const HEADERS_CFG={
@@ -680,6 +693,7 @@ async function cargarEscuelasUsuario(){
   return;
  }
  lista.innerHTML='';escuelaSeleccionada=null;
+ escuelasActivas=data;
  data.forEach(e=>{
   const div=document.createElement('div');
   div.className='tipo-btn';div.id='esc-'+e.id;
@@ -702,15 +716,6 @@ function seleccionarEscuela(e){
  const desde=e.nivel==='preparatoria'?1990:1995;
  for(let y=hasta;y>=desde;y--){const o=document.createElement('option');o.value=y;o.textContent=y;anioEl.appendChild(o);}
  if(anioActual)anioEl.value=anioActual;
- const labelProc=document.getElementById('label-procedencia');
- const sel=document.getElementById('procedenciaSelect');
- sel.innerHTML='<option value="">Seleccionar…</option>';
- const fuente=e.nivel==='preparatoria'?SECUNDARIAS_ENSENADA:PRIMARIAS_ENSENADA;
- labelProc.innerHTML=(e.nivel==='preparatoria'?'Secundaria de egreso':'Primaria de egreso')+' <span class="req">*</span>';
- fuente.forEach(n=>{const o=document.createElement('option');o.textContent=n;sel.appendChild(o);});
- const otra=document.createElement('option');otra.value='__otra__';otra.textContent='Otra (especificar)…';sel.appendChild(otra);
- document.getElementById('procedenciaOtraWrap').style.display='none';
- document.getElementById('procedenciaOtra').value='';
  actualizarOpcionesTipo();
 }
 function onProcedenciaChange(){
@@ -722,9 +727,58 @@ function onProcedenciaChange(){
 function getProcedencia(){
  const tipo=document.getElementById('tipoInscripcion').value;
  if(tipo==='Reinscripción')return'Mismo plantel (reinscripción)';
- if(tipo==='Traslado')return document.getElementById('procedenciaOtra').value.trim();
  const s=document.getElementById('procedenciaSelect').value;
  return s==='__otra__'?document.getElementById('procedenciaOtra').value.trim():s;
+}
+
+function poblarProcedencia(lista,valorPrevio){
+ const sel=document.getElementById('procedenciaSelect');
+ sel.innerHTML='<option value="">Seleccionar…</option>';
+ lista.forEach(n=>{const o=document.createElement('option');o.textContent=n;sel.appendChild(o);});
+ const otra=document.createElement('option');otra.value='__otra__';otra.textContent='Otra (especificar)…';sel.appendChild(otra);
+ if(valorPrevio&&[...sel.options].some(o=>o.value===valorPrevio))sel.value=valorPrevio;
+}
+
+// ═══════════════════════════════════════════════
+// SUB B SEGÚN TIPO DE INSCRIPCIÓN
+// ═══════════════════════════════════════════════
+function configurarSubB(){
+ const tipo=document.getElementById('tipoInscripcion').value;
+ const nivel=escuelaSeleccionada.nivel;
+ const selWrap=document.getElementById('procedenciaSelectWrap');
+ const otraWrap=document.getElementById('procedenciaOtraWrap');
+ const labelProc=document.getElementById('label-procedencia');
+ const labelOtra=document.getElementById('label-procedencia-otra');
+ const promLabel=document.getElementById('label-promedio');
+ const valorPrevio=document.getElementById('procedenciaSelect').value;
+ if(tipo==='Reinscripción'){
+  // Mismo plantel: no se pide escuela anterior
+  selWrap.style.display='none';
+  otraWrap.style.display='none';
+  promLabel.innerHTML='Promedio del último ciclo cursado <span class="req">*</span>';
+ } else if(tipo==='Traslado'){
+  // Otro plantel del MISMO nivel: curadas + las del director (sin la destino)
+  selWrap.style.display='flex';
+  const curadas=nivel==='preparatoria'?PREPARATORIAS_ENSENADA:SECUNDARIAS_ENSENADA;
+  const delDirector=escuelasActivas.filter(e=>e.nivel===nivel&&e.nombre!==escuelaSeleccionada.nombre).map(e=>e.nombre);
+  const fusionadas=[...new Set([...delDirector,...curadas])].filter(n=>n!==escuelaSeleccionada.nombre);
+  labelProc.innerHTML='Plantel de procedencia ('+(nivel==='preparatoria'?'preparatoria':'secundaria')+') <span class="req">*</span>';
+  poblarProcedencia(fusionadas,valorPrevio);
+  labelOtra.innerHTML='Especifica el plantel <span class="req">*</span>';
+  promLabel.innerHTML='Promedio del último ciclo <span class="req">*</span>';
+ } else {
+  // Nuevo ingreso: viene del nivel anterior
+  selWrap.style.display='flex';
+  const fuente=nivel==='preparatoria'?SECUNDARIAS_ENSENADA:PRIMARIAS_ENSENADA;
+  labelProc.innerHTML=(nivel==='preparatoria'?'Secundaria de egreso':'Primaria de egreso')+' <span class="req">*</span>';
+  poblarProcedencia(fuente,valorPrevio);
+  labelOtra.innerHTML='Especifica la escuela <span class="req">*</span>';
+  promLabel.innerHTML='Promedio de egreso <span class="req">*</span>';
+ }
+ // Mostrar/ocultar el campo "otra" según el valor actual del select
+ const esOtra=document.getElementById('procedenciaSelect').value==='__otra__';
+ otraWrap.style.display=(tipo!=='Reinscripción'&&esOtra)?'flex':'none';
+ checkSubB();
 }
 
 // ═══════════════════════════════════════════════
@@ -754,38 +808,6 @@ function actualizarGrados(){
  }
 }
 function onTipoInscripcionChange(){actualizarGrados();checkSubA();}
-
-// ═══════════════════════════════════════════════
-// SUB B SEGÚN TIPO DE INSCRIPCIÓN
-// ═══════════════════════════════════════════════
-function configurarSubB(){
- const tipo=document.getElementById('tipoInscripcion').value;
- const nivel=escuelaSeleccionada.nivel;
- const selWrap=document.getElementById('procedenciaSelectWrap');
- const otraWrap=document.getElementById('procedenciaOtraWrap');
- const labelOtra=document.getElementById('label-procedencia-otra');
- const promLabel=document.getElementById('label-promedio');
- if(tipo==='Reinscripción'){
-  // Mismo plantel: no se pide escuela anterior
-  selWrap.style.display='none';
-  otraWrap.style.display='none';
-  promLabel.innerHTML='Promedio del último ciclo cursado <span class="req">*</span>';
- } else if(tipo==='Traslado'){
-  // Viene de otro plantel del MISMO nivel
-  selWrap.style.display='none';
-  otraWrap.style.display='flex';
-  labelOtra.innerHTML='Plantel de procedencia ('+(nivel==='preparatoria'?'preparatoria':'secundaria')+') <span class="req">*</span>';
-  document.getElementById('procedenciaOtra').placeholder='Nombre del plantel anterior';
-  promLabel.innerHTML='Promedio del último ciclo <span class="req">*</span>';
- } else {
-  // Nuevo ingreso: viene del nivel anterior (dropdown)
-  selWrap.style.display='flex';
-  otraWrap.style.display=document.getElementById('procedenciaSelect').value==='__otra__'?'flex':'none';
-  labelOtra.innerHTML='Especifica la escuela <span class="req">*</span>';
-  promLabel.innerHTML='Promedio de egreso <span class="req">*</span>';
- }
- checkSubB();
-}
 
 // ═══════════════════════════════════════════════
 // TIPO SOLICITANTE
@@ -877,7 +899,59 @@ function checkSubB(){
  document.getElementById('btnSubB').disabled=!(getProcedencia()&&!isNaN(p)&&p>=6&&p<=10);
 }
 function checkSubC(){
- document.getElementById('btnSubC').disabled=!(document.getElementById('calle').value.trim()&&document.getElementById('colonia').value.trim());
+ const calle=document.getElementById('calle').value.trim();
+ const cp=document.getElementById('cp').value;
+ document.getElementById('btnSubC').disabled=!(calle&&cp.length===5&&getColonia());
+}
+
+// ═══════════════════════════════════════════════
+// CP → COLONIAS (servicio público Zippopotam)
+// ═══════════════════════════════════════════════
+function getColonia(){
+ const selWrap=document.getElementById('coloniaSelectWrap');
+ const sel=document.getElementById('coloniaSelect');
+ if(selWrap.style.display!=='none'&&sel.value&&sel.value!=='__otra__')return sel.value;
+ return document.getElementById('colonia').value.trim();
+}
+function modoColoniaManual(hintTxt){
+ document.getElementById('coloniaSelectWrap').style.display='none';
+ document.getElementById('coloniaTextWrap').style.display='flex';
+ if(hintTxt)document.getElementById('cpHint').textContent=hintTxt;
+}
+async function onCPChange(){
+ const cp=document.getElementById('cp').value.replace(/\D/g,'');
+ document.getElementById('cp').value=cp;
+ const hint=document.getElementById('cpHint');
+ if(cp.length!==5){
+  modoColoniaManual('Al capturar el C.P. se cargan las colonias de la zona.');
+  checkSubC();
+  return;
+ }
+ hint.textContent='Buscando colonias…';
+ try{
+  const resp=await fetch('https://api.zippopotam.us/MX/'+cp);
+  if(!resp.ok)throw new Error('not found');
+  const data=await resp.json();
+  cpColonias=(data.places||[]).map(p=>p['place name']);
+  if(cpColonias.length===0)throw new Error('empty');
+  const sel=document.getElementById('coloniaSelect');
+  sel.innerHTML='<option value="">Seleccionar colonia…</option>';
+  cpColonias.forEach(c=>{const o=document.createElement('option');o.textContent=c;sel.appendChild(o);});
+  const otra=document.createElement('option');otra.value='__otra__';otra.textContent='Otra (escribir)…';sel.appendChild(otra);
+  document.getElementById('coloniaSelectWrap').style.display='flex';
+  document.getElementById('coloniaTextWrap').style.display='none';
+  document.getElementById('colonia').value='';
+  hint.textContent=cpColonias.length+' colonia(s) encontradas para el C.P. '+cp;
+ }catch(e){
+  modoColoniaManual('No se encontraron colonias para ese C.P. — escríbela manualmente.');
+ }
+ checkSubC();
+}
+function onColoniaChange(){
+ const esOtra=document.getElementById('coloniaSelect').value==='__otra__';
+ document.getElementById('coloniaTextWrap').style.display=esOtra?'flex':'none';
+ if(!esOtra)document.getElementById('colonia').value='';
+ checkSubC();
 }
 
 // ═══════════════════════════════════════════════
@@ -972,7 +1046,7 @@ function fillReview(){
  document.getElementById('r-prom').textContent=parseFloat(document.getElementById('promedio').value).toFixed(1);
  document.getElementById('r-turno').textContent=document.getElementById('turno').value||'Sin preferencia';
  const cp=document.getElementById('cp').value.trim();
- document.getElementById('r-dir').textContent=document.getElementById('calle').value.trim()+', Col. '+document.getElementById('colonia').value.trim()+(cp?', C.P. '+cp:'');
+ document.getElementById('r-dir').textContent=document.getElementById('calle').value.trim()+', Col. '+getColonia()+', C.P. '+cp;
  const esMayor=tipoSelected===3;
  document.getElementById('r-padre-row').style.display=esMayor?'none':'flex';
  document.getElementById('r-madre-row').style.display=esMayor?'none':'flex';
@@ -1012,7 +1086,7 @@ async function enviar(){
   procedencia:getProcedencia(),
   promedio:parseFloat(document.getElementById('promedio').value),
   turno:document.getElementById('turno').value||'Sin preferencia',
-  domicilio:document.getElementById('calle').value+', Col. '+document.getElementById('colonia').value+(document.getElementById('cp').value?', C.P. '+document.getElementById('cp').value:''),
+  domicilio:document.getElementById('calle').value+', Col. '+getColonia()+', C.P. '+document.getElementById('cp').value,
   padre:esMayor?'':(sinP?'Sin datos':document.getElementById('nombrePadre').value),
   tel_padre:esMayor||sinP?'':document.getElementById('telPadre').value,
   email_padre:esMayor||sinP?'':document.getElementById('emailPadre').value,
@@ -1052,6 +1126,8 @@ function reiniciar(){
  ['sinDatosPadre','sinContactoPadre','sinDatosMadre','sinContactoMadre'].forEach(id=>{const el=document.getElementById(id);el.checked=false;});
  ['bloquePadre','contactoPadre','bloqueMadre','contactoMadre'].forEach(id=>{document.getElementById(id).classList.remove('collapsed');});
  document.getElementById('procedenciaOtraWrap').style.display='none';
+ modoColoniaManual('Al capturar el C.P. se cargan las colonias de la zona.');
+ document.getElementById('coloniaSelect').innerHTML='';
  document.getElementById('grado').disabled=false;
  document.getElementById('gradoHint').style.display='none';
  document.getElementById('curp').classList.remove('invalid');
