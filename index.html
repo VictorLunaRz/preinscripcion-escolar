@@ -192,6 +192,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .banner-aceptado p{color:#1A5A35;}
 .banner-rechazado{background:#FFF5F5;border-color:#F5C0C0;}
 .banner-rechazado p{color:#8A2A20;}
+/* ── SIN SCROLLBARS VISIBLES (scroll funcional con dedo/rueda) ── */
+body{overflow:hidden;}
+.screen,.privacy-box,.dir-body,.edit-body{scrollbar-width:none;-ms-overflow-style:none;}
+.screen::-webkit-scrollbar,.privacy-box::-webkit-scrollbar,.dir-body::-webkit-scrollbar,.edit-body::-webkit-scrollbar{display:none;width:0;height:0;}
 </style>
 </head>
 <body>
@@ -871,7 +875,9 @@ function goSub(sub){
  const el=document.getElementById('sub'+sub);
  el.style.display='flex';el.style.flexDirection='column';
  document.getElementById('s4').scrollTop=0;
+ if(sub==='A')checkSubA();
  if(sub==='B')configurarSubB();
+ if(sub==='C')checkSubC();
  if(sub==='D'){
   const esMayor=tipoSelected===3;
   document.getElementById('subD-familia').style.display=esMayor?'none':'flex';
@@ -889,8 +895,8 @@ const PARTICULAS=['DA','DAS','DE','DEL','DER','DI','DIE','DD','EL','LA','LOS','L
 
 function limpiarNombre(s){
  return s.toUpperCase()
-  .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
   .replace(/Ñ/g,'X')
+  .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
   .replace(/[^A-ZX ]/g,' ')
   .replace(/\s+/g,' ').trim();
 }
@@ -1220,6 +1226,7 @@ function reiniciar(){
  document.getElementById('gradoHint').style.display='none';
  document.getElementById('curp').classList.remove('invalid');
  document.getElementById('curpError').style.display='none';
+ document.getElementById('curpWarn').style.display='none';
  document.getElementById('btnSubA').disabled=true;
  document.getElementById('btnSubB').disabled=true;
  document.getElementById('btnSubC').disabled=true;
