@@ -338,6 +338,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
      <input class="form-input" id="curp" type="text" maxlength="18" placeholder="18 caracteres" style="letter-spacing:2px;font-family:monospace;" oninput="this.value=this.value.toUpperCase();checkSubA()">
      <span class="field-hint" id="curpLen">0 / 18 caracteres</span>
      <span class="field-error" id="curpError"></span>
+     <span class="field-hint" id="curpWarn" style="display:none;color:#C2620A;"></span>
     </div>
     <button class="btn-primary" id="btnSubA" onclick="goSub('B')" disabled style="margin-top:auto;">Siguiente →</button>
    </div>
@@ -536,19 +537,22 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
      </div>
      <div class="dir-section" id="tab-registros">
       <div class="form-group"><label class="form-label">Buscar por folio o nombre</label><input class="form-input" id="buscarReg" type="text" placeholder="PRE-2026-..." oninput="renderRegistros()"></div>
-      <div class="filtros-row">
-       <select class="form-select" id="filtroEscuela" onchange="renderRegistros()"><option value="">Todas las escuelas</option></select>
-       <select class="form-select" id="filtroNivel" onchange="renderRegistros()"><option value="">Todos los niveles</option><option>Preparatoria</option><option>Secundaria</option></select>
+      <button class="btn-secondary" id="toggleFiltrosBtn" onclick="toggleFiltros()" style="padding:8px;font-size:12px;">⚙ Filtros y exportación ▾</button>
+      <div class="collapsible collapsed" id="filtrosWrap">
+       <div class="filtros-row">
+        <select class="form-select" id="filtroEscuela" onchange="renderRegistros()"><option value="">Todas las escuelas</option></select>
+        <select class="form-select" id="filtroNivel" onchange="renderRegistros()"><option value="">Todos los niveles</option><option>Preparatoria</option><option>Secundaria</option></select>
+       </div>
+       <div class="filtros-row">
+        <select class="form-select" id="filtroGrado" onchange="renderRegistros()"><option value="">Todos los grados</option></select>
+        <select class="form-select" id="filtroEstado" onchange="renderRegistros()"><option value="">Todos los estados</option><option>Pendiente</option><option>Aceptado</option><option>Rechazado</option></select>
+       </div>
+       <div class="filtros-row">
+        <button class="btn-csv" onclick="exportarFiltrados()" style="padding:9px;font-size:12px;">⬇ CSV filtrado</button>
+        <button class="btn-csv" onclick="exportarFotosZip()" style="padding:9px;font-size:12px;">🖼 Fotos (ZIP)</button>
+       </div>
+       <button class="btn-csv" onclick="importarFotos()" style="padding:9px;font-size:12px;">📁 Importar fotos (nombre = folio)</button>
       </div>
-      <div class="filtros-row">
-       <select class="form-select" id="filtroGrado" onchange="renderRegistros()"><option value="">Todos los grados</option></select>
-       <select class="form-select" id="filtroEstado" onchange="renderRegistros()"><option value="">Todos los estados</option><option>Pendiente</option><option>Aceptado</option><option>Rechazado</option></select>
-      </div>
-      <div class="filtros-row">
-       <button class="btn-csv" onclick="exportarFiltrados()" style="padding:9px;font-size:12px;">⬇ CSV filtrado</button>
-       <button class="btn-csv" onclick="exportarFotosZip()" style="padding:9px;font-size:12px;">🖼 Fotos (ZIP)</button>
-      </div>
-      <button class="btn-csv" onclick="importarFotos()" style="padding:9px;font-size:12px;">📁 Importar fotos (nombre de archivo = folio)</button>
       <div id="dir-registros-lista" style="display:flex;flex-direction:column;gap:7px;"></div>
      </div>
     </div>
@@ -620,6 +624,32 @@ function verFoto(url){document.getElementById('fotoViewerImg').src=url;document.
  const aEl=document.getElementById('fnacAnio');
  for(let y=2015;y>=1990;y--){const o=document.createElement('option');o.value=y;o.textContent=y;aEl.appendChild(o);}
  [1,2,3,4,5,6,7].forEach(n=>document.getElementById('s'+n).classList.add('hidden'));
+ // Normalización automática: mayúsculas en campos de identidad/domicilio (preserva posición del cursor)
+ ['nombre','apPat','apMat','nombrePadre','nombreMadre','calle','colonia','procedenciaOtra'].forEach(id=>{
+  const el=document.getElementById(id);
+  if(!el)return;
+  el.addEventListener('input',()=>{
+   const p=el.selectionStart;
+   el.value=el.value.toUpperCase();
+   try{el.setSelectionRange(p,p);}catch(e){}
+  });
+ });
+ // Correos siempre en minúsculas
+ ['emailPadre','emailMadre','emailAlumno'].forEach(id=>{
+  const el=document.getElementById(id);
+  if(!el)return;
+  el.addEventListener('input',()=>{
+   const p=el.selectionStart;
+   el.value=el.value.toLowerCase();
+   try{el.setSelectionRange(p,p);}catch(e){}
+  });
+ });
+ // Teléfonos: solo dígitos
+ ['telPadre','telMadre','telAlumno'].forEach(id=>{
+  const el=document.getElementById(id);
+  if(!el)return;
+  el.addEventListener('input',()=>{el.value=el.value.replace(/\D/g,'');});
+ });
 })();
 
 // ═══════════════════════════════════════════════
@@ -852,27 +882,80 @@ function goSub(sub){
 }
 
 // ═══════════════════════════════════════════════
-// VALIDACIÓN CURP
+// VALIDACIÓN CURP (estructural + matemática + cruces)
 // ═══════════════════════════════════════════════
+const ESTADOS_CURP=['AS','BC','BS','CC','CL','CM','CS','CH','DF','DG','GT','GR','HG','JC','MC','MN','MS','NT','NL','OC','PL','QT','QR','SP','SL','SR','TC','TS','TL','VZ','YN','ZS','NE'];
+const PARTICULAS=['DA','DAS','DE','DEL','DER','DI','DIE','DD','EL','LA','LOS','LAS','LE','LES','MAC','MC','VAN','VON','Y'];
+
+function limpiarNombre(s){
+ return s.toUpperCase()
+  .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+  .replace(/Ñ/g,'X')
+  .replace(/[^A-ZX ]/g,' ')
+  .replace(/\s+/g,' ').trim();
+}
+function sinParticulas(s){
+ const palabras=limpiarNombre(s).split(' ').filter(w=>w&&!PARTICULAS.includes(w));
+ return palabras.length?palabras:[''];
+}
+function nombreParaCURP(nombres){
+ const palabras=sinParticulas(nombres);
+ if(palabras.length>1&&['MARIA','MA','MA.','JOSE','J','J.'].includes(palabras[0]))return palabras[1];
+ return palabras[0];
+}
+function primeraVocalInterna(w){
+ for(let i=1;i<w.length;i++)if('AEIOU'.includes(w[i]))return w[i];
+ return'X';
+}
+function primeraConsonanteInterna(w){
+ for(let i=1;i<w.length;i++)if(w[i]!==' '&&!'AEIOU'.includes(w[i]))return w[i];
+ return'X';
+}
+function digitoVerificadorCURP(curp17){
+ const tabla='0123456789ABCDEFGHIJKLMNÑOPQRSTUVWXYZ';
+ let suma=0;
+ for(let i=0;i<17;i++)suma+=tabla.indexOf(curp17[i])*(18-i);
+ return(10-(suma%10))%10;
+}
 function validarCURP(curp){
- if(curp.length!==18)return{ok:false,msg:''};
+ if(curp.length!==18)return{ok:false,msg:'',warn:''};
  const re=/^[A-Z][AEIOUX][A-Z]{2}\d{6}[HM][A-Z]{2}[B-DF-HJ-NP-TV-Z]{3}[A-Z0-9]\d$/;
- if(!re.test(curp))return{ok:false,msg:'El formato del CURP no es válido. Verifica que esté bien escrito.'};
- // Cruce con fecha de nacimiento
+ if(!re.test(curp))return{ok:false,msg:'El formato del CURP no es válido. Verifica que esté bien escrito.',warn:''};
+ // Estado válido
+ if(!ESTADOS_CURP.includes(curp.slice(11,13)))return{ok:false,msg:'La clave de entidad federativa del CURP ('+curp.slice(11,13)+') no existe.',warn:''};
+ // Fecha de nacimiento
  const dia=document.getElementById('fnacDia').value;
  const mes=document.getElementById('fnacMes').value;
  const anio=document.getElementById('fnacAnio').value;
  if(dia&&mes&&anio){
   const esperado=anio.slice(-2)+mes+dia;
-  if(curp.slice(4,10)!==esperado)return{ok:false,msg:'La fecha en el CURP no coincide con la fecha de nacimiento capturada.'};
+  if(curp.slice(4,10)!==esperado)return{ok:false,msg:'La fecha en el CURP no coincide con la fecha de nacimiento capturada.',warn:''};
+  // Homoclave: dígito si nació antes de 2000, letra si 2000 en adelante
+  const esDigito=/\d/.test(curp[16]);
+  if(parseInt(anio)<2000&&!esDigito)return{ok:false,msg:'Para nacidos antes del 2000, la posición 17 del CURP debe ser un número.',warn:''};
+  if(parseInt(anio)>=2000&&esDigito)return{ok:false,msg:'Para nacidos del 2000 en adelante, la posición 17 del CURP debe ser una letra.',warn:''};
  }
- // Cruce con sexo
+ // Sexo
  const sexo=document.getElementById('sexo').value;
  if(sexo){
   const esperado=sexo==='Masculino'?'H':'M';
-  if(curp[10]!==esperado)return{ok:false,msg:'El sexo en el CURP no coincide con el capturado.'};
+  if(curp[10]!==esperado)return{ok:false,msg:'El sexo en el CURP no coincide con el capturado.',warn:''};
  }
- return{ok:true,msg:''};
+ // Dígito verificador (matemático — detecta errores de dedo)
+ if(digitoVerificadorCURP(curp)!==parseInt(curp[17]))return{ok:false,msg:'El dígito verificador del CURP no corresponde — revisa cada carácter, parece haber un error de captura.',warn:''};
+ // Cruce con el nombre (advertencia, no bloquea: hay casos especiales)
+ let warn='';
+ const ap1=sinParticulas(document.getElementById('apPat').value)[0];
+ const ap2=sinParticulas(document.getElementById('apMat').value)[0];
+ const nom=nombreParaCURP(document.getElementById('nombre').value);
+ if(ap1&&nom){
+  const esperadas=ap1[0]+primeraVocalInterna(ap1)+(ap2?ap2[0]:'X')+nom[0];
+  const consonantes=primeraConsonanteInterna(ap1)+(ap2?primeraConsonanteInterna(ap2):'X')+primeraConsonanteInterna(nom);
+  if(curp.slice(0,4)!==esperadas||curp.slice(13,16)!==consonantes){
+   warn='Aviso: las letras del CURP no coinciden exactamente con el nombre capturado. Verifica que ambos estén bien escritos (hay casos especiales válidos).';
+  }
+ }
+ return{ok:true,msg:'',warn};
 }
 
 function checkSubA(){
@@ -880,6 +963,7 @@ function checkSubA(){
  document.getElementById('curpLen').textContent=curp.length+' / 18 caracteres';
  const curpInput=document.getElementById('curp');
  const curpError=document.getElementById('curpError');
+ const curpWarn=document.getElementById('curpWarn');
  let curpOk=false;
  if(curp.length===18){
   const v=validarCURP(curp);
@@ -887,9 +971,12 @@ function checkSubA(){
   curpInput.classList.toggle('invalid',!v.ok);
   curpError.textContent=v.msg;
   curpError.style.display=v.ok?'none':'block';
+  curpWarn.textContent=v.warn||'';
+  curpWarn.style.display=v.warn?'block':'none';
  } else {
   curpInput.classList.remove('invalid');
   curpError.style.display='none';
+  curpWarn.style.display='none';
  }
  const ok=document.getElementById('nombre').value.trim()&&document.getElementById('apPat').value.trim()&&document.getElementById('apMat').value.trim()&&document.getElementById('fnacDia').value&&document.getElementById('fnacMes').value&&document.getElementById('fnacAnio').value&&document.getElementById('sexo').value&&document.getElementById('grado').value&&document.getElementById('tipoInscripcion').value&&curpOk;
  document.getElementById('btnSubA').disabled=!ok;
@@ -1068,6 +1155,7 @@ async function enviar(){
  const btn=document.getElementById('btnEnviar');
  btn.disabled=true;
  showLoading('Enviando registro...');
+ const norm=s=>(s||'').replace(/\s+/g,' ').trim();
  const esMayor=tipoSelected===3;
  const sinP=!esMayor&&document.getElementById('sinDatosPadre').checked;
  const sinM=!esMayor&&document.getElementById('sinDatosMadre').checked;
@@ -1077,24 +1165,24 @@ async function enviar(){
   fecha:new Date().toLocaleDateString('es-MX'),
   escuela:escuelaSeleccionada.nombre,
   nivel:escuelaSeleccionada.nivel==='preparatoria'?'Preparatoria':'Secundaria',
-  nombre:document.getElementById('apPat').value+' '+document.getElementById('apMat').value+', '+document.getElementById('nombre').value,
+  nombre:norm(document.getElementById('apPat').value)+' '+norm(document.getElementById('apMat').value)+', '+norm(document.getElementById('nombre').value),
   fecha_nac:document.getElementById('fnacDia').value+'/'+document.getElementById('fnacMes').value+'/'+document.getElementById('fnacAnio').value,
   sexo:document.getElementById('sexo').value,
   curp:document.getElementById('curp').value,
   grado:document.getElementById('grado').value,
   tipo_inscripcion:document.getElementById('tipoInscripcion').value,
-  procedencia:getProcedencia(),
+  procedencia:norm(getProcedencia()),
   promedio:parseFloat(document.getElementById('promedio').value),
   turno:document.getElementById('turno').value||'Sin preferencia',
-  domicilio:document.getElementById('calle').value+', Col. '+getColonia()+', C.P. '+document.getElementById('cp').value,
-  padre:esMayor?'':(sinP?'Sin datos':document.getElementById('nombrePadre').value),
+  domicilio:norm(document.getElementById('calle').value)+', Col. '+norm(getColonia())+', C.P. '+document.getElementById('cp').value,
+  padre:esMayor?'':(sinP?'Sin datos':norm(document.getElementById('nombrePadre').value)),
   tel_padre:esMayor||sinP?'':document.getElementById('telPadre').value,
-  email_padre:esMayor||sinP?'':document.getElementById('emailPadre').value,
-  madre:esMayor?'':(sinM?'Sin datos':document.getElementById('nombreMadre').value),
+  email_padre:esMayor||sinP?'':norm(document.getElementById('emailPadre').value),
+  madre:esMayor?'':(sinM?'Sin datos':norm(document.getElementById('nombreMadre').value)),
   tel_madre:esMayor||sinM?'':document.getElementById('telMadre').value,
-  email_madre:esMayor||sinM?'':document.getElementById('emailMadre').value,
+  email_madre:esMayor||sinM?'':norm(document.getElementById('emailMadre').value),
   tel_alumno:esMayor?document.getElementById('telAlumno').value:'',
-  email:esMayor?document.getElementById('emailAlumno').value:'',
+  email:esMayor?norm(document.getElementById('emailAlumno').value):'',
   tipo_solicitante:tipoSelected===1?'Padre/Tutor':tipoSelected===2?'Alumno menor':'Alumno mayor',
   sin_dato_padre:sinP,
   sin_dato_madre:sinM,
@@ -1286,6 +1374,13 @@ function logoutDir(){
  document.getElementById('loginError').style.display='none';
  document.getElementById('dirLogin').style.display='flex';
  document.getElementById('dirPanel').style.display='none';
+}
+function toggleFiltros(){
+ const wrap=document.getElementById('filtrosWrap');
+ const btn=document.getElementById('toggleFiltrosBtn');
+ const abierto=!wrap.classList.contains('collapsed');
+ wrap.classList.toggle('collapsed',abierto);
+ btn.textContent=abierto?'⚙ Filtros y exportación ▾':'⚙ Filtros y exportación ▴';
 }
 function dirTab(tab){
  document.querySelectorAll('.dir-tab').forEach((b,i)=>{b.classList.toggle('active',['stats','escuelas','registros'][i]===tab);});
