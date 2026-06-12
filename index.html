@@ -82,6 +82,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .sindato-row{display:flex;align-items:center;gap:8px;flex-shrink:0;padding:1px 0;}
 .sindato-row input{width:15px;height:15px;accent-color:#C2620A;cursor:pointer;flex-shrink:0;}
 .sindato-row label{font-size:12px;color:#C2620A;cursor:pointer;font-weight:500;}
+.collapsible{display:flex;flex-direction:column;gap:9px;overflow:hidden;max-height:600px;opacity:1;transition:max-height .35s ease,opacity .25s ease;}
+.collapsible.collapsed{max-height:0;opacity:0;pointer-events:none;}
 .review-section{background:#fff;border-radius:13px;border:1px solid #E4EAF3;overflow:hidden;flex-shrink:0;}
 .review-section-header{background:#F0F4FA;padding:8px 13px;font-size:10px;font-weight:700;color:#0D4F8C;text-transform:uppercase;letter-spacing:0.8px;border-bottom:1px solid #E4EAF3;}
 .review-row{display:flex;justify-content:space-between;align-items:flex-start;padding:8px 13px;border-bottom:1px solid #F5F7FA;}
@@ -369,17 +371,25 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div class="substep-header"><div class="substep-num">D</div><span class="substep-title" id="subD-title">Contacto familiar</span></div>
     <div id="subD-familia" style="display:flex;flex-direction:column;gap:9px;">
      <div class="section-divider"><span>Padre</span></div>
-     <div class="sindato-row"><input type="checkbox" id="sinDatosPadre" onchange="toggleSinDatos('Padre')"><label for="sinDatosPadre">No conozco los datos del padre</label></div>
-     <div class="form-group"><label class="form-label">Nombre del padre <span class="req">*</span></label><input class="form-input" id="nombrePadre" type="text" placeholder="Nombre completo" oninput="checkSubD()"></div>
-     <div class="sindato-row"><input type="checkbox" id="sinTelPadre" onchange="toggleSinTel('Padre')"><label for="sinTelPadre">No cuento con su teléfono</label></div>
-     <div class="form-group"><label class="form-label">Teléfono del padre</label><input class="form-input" id="telPadre" type="tel" maxlength="10" placeholder="10 dígitos" oninput="checkSubD()"></div>
-     <div class="form-group"><label class="form-label">Correo del padre</label><input class="form-input" id="emailPadre" type="email" placeholder="opcional" oninput="checkSubD()"></div>
+     <div class="sindato-row"><input type="checkbox" id="sinDatosPadre" onchange="toggleSinDatos('Padre')"><label for="sinDatosPadre">No tengo datos del padre</label></div>
+     <div class="collapsible" id="bloquePadre">
+      <div class="form-group"><label class="form-label">Nombre del padre <span class="req">*</span></label><input class="form-input" id="nombrePadre" type="text" placeholder="Nombre completo" oninput="checkSubD()"></div>
+      <div class="sindato-row"><input type="checkbox" id="sinContactoPadre" onchange="toggleSinContacto('Padre')"><label for="sinContactoPadre">No tengo información de contacto</label></div>
+      <div class="collapsible" id="contactoPadre">
+       <div class="form-group"><label class="form-label">Teléfono del padre</label><input class="form-input" id="telPadre" type="tel" maxlength="10" placeholder="10 dígitos" oninput="checkSubD()"></div>
+       <div class="form-group"><label class="form-label">Correo del padre</label><input class="form-input" id="emailPadre" type="email" placeholder="correo@ejemplo.com" oninput="checkSubD()"></div>
+      </div>
+     </div>
      <div class="section-divider"><span>Madre</span></div>
-     <div class="sindato-row"><input type="checkbox" id="sinDatosMadre" onchange="toggleSinDatos('Madre')"><label for="sinDatosMadre">No conozco los datos de la madre</label></div>
-     <div class="form-group"><label class="form-label">Nombre de la madre <span class="req">*</span></label><input class="form-input" id="nombreMadre" type="text" placeholder="Nombre completo" oninput="checkSubD()"></div>
-     <div class="sindato-row"><input type="checkbox" id="sinTelMadre" onchange="toggleSinTel('Madre')"><label for="sinTelMadre">No cuento con su teléfono</label></div>
-     <div class="form-group"><label class="form-label">Teléfono de la madre</label><input class="form-input" id="telMadre" type="tel" maxlength="10" placeholder="10 dígitos" oninput="checkSubD()"></div>
-     <div class="form-group"><label class="form-label">Correo de la madre</label><input class="form-input" id="emailMadre" type="email" placeholder="opcional" oninput="checkSubD()"></div>
+     <div class="sindato-row"><input type="checkbox" id="sinDatosMadre" onchange="toggleSinDatos('Madre')"><label for="sinDatosMadre">No tengo datos de la madre</label></div>
+     <div class="collapsible" id="bloqueMadre">
+      <div class="form-group"><label class="form-label">Nombre de la madre <span class="req">*</span></label><input class="form-input" id="nombreMadre" type="text" placeholder="Nombre completo" oninput="checkSubD()"></div>
+      <div class="sindato-row"><input type="checkbox" id="sinContactoMadre" onchange="toggleSinContacto('Madre')"><label for="sinContactoMadre">No tengo información de contacto</label></div>
+      <div class="collapsible" id="contactoMadre">
+       <div class="form-group"><label class="form-label">Teléfono de la madre</label><input class="form-input" id="telMadre" type="tel" maxlength="10" placeholder="10 dígitos" oninput="checkSubD()"></div>
+       <div class="form-group"><label class="form-label">Correo de la madre</label><input class="form-input" id="emailMadre" type="email" placeholder="correo@ejemplo.com" oninput="checkSubD()"></div>
+      </div>
+     </div>
     </div>
     <div id="subD-mayor" style="display:none;flex-direction:column;gap:10px;">
      <div class="form-group"><label class="form-label">Teléfono del alumno <span class="req">*</span></label><input class="form-input" id="telAlumno" type="tel" maxlength="10" placeholder="10 dígitos" oninput="checkSubD()"></div>
@@ -497,8 +507,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
        <div class="stat-card"><div class="stat-num" id="st-prom">—</div><div class="stat-label">Prom. avg</div></div>
        <div class="stat-card"><div class="stat-num" id="st-hoy">0</div><div class="stat-label">Hoy</div></div>
       </div>
-      <button class="btn-csv" onclick="exportarTodos()">⬇ Exportar todos (CSV)</button>
-      <button class="btn-csv" onclick="exportarFotosZip()">🖼 Descargar fotos (ZIP)</button>
+      <div class="info-banner"><span class="ib-icon">ⓘ</span><p>Las exportaciones (CSV y fotos) están en la pestaña <strong>Registros</strong> y respetan los filtros activos.</p></div>
       <button class="btn-secondary" onclick="logoutDir()" style="font-size:13px;padding:10px;">Cerrar sesión</button>
      </div>
      <div class="dir-section" id="tab-escuelas">
@@ -521,6 +530,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <div class="filtros-row">
        <select class="form-select" id="filtroEscuela" onchange="renderRegistros()"><option value="">Todas las escuelas</option></select>
        <select class="form-select" id="filtroNivel" onchange="renderRegistros()"><option value="">Todos los niveles</option><option>Preparatoria</option><option>Secundaria</option></select>
+      </div>
+      <div class="filtros-row">
+       <select class="form-select" id="filtroGrado" onchange="renderRegistros()"><option value="">Todos los grados</option></select>
+       <select class="form-select" id="filtroEstado" onchange="renderRegistros()"><option value="">Todos los estados</option><option>Pendiente</option><option>Aceptado</option><option>Rechazado</option></select>
+      </div>
+      <div class="filtros-row">
+       <button class="btn-csv" onclick="exportarFiltrados()" style="padding:9px;font-size:12px;">⬇ CSV filtrado</button>
+       <button class="btn-csv" onclick="exportarFotosZip()" style="padding:9px;font-size:12px;">🖼 Fotos (ZIP)</button>
       </div>
       <button class="btn-csv" onclick="importarFotos()" style="padding:9px;font-size:12px;">📁 Importar fotos (nombre de archivo = folio)</button>
       <div id="dir-registros-lista" style="display:flex;flex-direction:column;gap:7px;"></div>
@@ -868,34 +885,37 @@ function checkSubC(){
 // ═══════════════════════════════════════════════
 function toggleSinDatos(quien){
  const sin=document.getElementById('sinDatos'+quien).checked;
- ['nombre'+quien,'tel'+quien,'email'+quien].forEach(id=>{
-  const el=document.getElementById(id);
-  el.disabled=sin;
-  if(sin)el.value='';
- });
- const sinTel=document.getElementById('sinTel'+quien);
- sinTel.disabled=sin;
- if(sin)sinTel.checked=false;
+ document.getElementById('bloque'+quien).classList.toggle('collapsed',sin);
+ if(sin){
+  ['nombre'+quien,'tel'+quien,'email'+quien].forEach(id=>{document.getElementById(id).value='';});
+  document.getElementById('sinContacto'+quien).checked=false;
+  document.getElementById('contacto'+quien).classList.remove('collapsed');
+ }
  checkSubD();
 }
-function toggleSinTel(quien){
- const sin=document.getElementById('sinTel'+quien).checked;
- const tel=document.getElementById('tel'+quien);
- tel.disabled=sin;
- if(sin)tel.value='';
+function toggleSinContacto(quien){
+ const sin=document.getElementById('sinContacto'+quien).checked;
+ document.getElementById('contacto'+quien).classList.toggle('collapsed',sin);
+ if(sin){
+  document.getElementById('tel'+quien).value='';
+  document.getElementById('email'+quien).value='';
+ }
  checkSubD();
 }
 function estadoPadre(quien){
  const sinDatos=document.getElementById('sinDatos'+quien).checked;
- if(sinDatos)return{valido:true,contactable:false};
+ if(sinDatos)return{valido:true,contactable:false,omitido:true};
  const nombre=document.getElementById('nombre'+quien).value.trim();
- const sinTel=document.getElementById('sinTel'+quien).checked;
+ const sinContacto=document.getElementById('sinContacto'+quien).checked;
+ if(sinContacto)return{valido:!!nombre,contactable:false,omitido:false};
  const tel=document.getElementById('tel'+quien).value;
  const email=document.getElementById('email'+quien).value.trim();
- const telOk=sinTel||tel.length===10;
- const valido=nombre&&telOk;
- const contactable=!!(nombre&&((!sinTel&&tel.length===10)||email));
- return{valido,contactable};
+ const telOk=tel.length===10;
+ const telVacio=tel.length===0;
+ const tieneContacto=telOk||(telVacio&&email.length>0);
+ // Si escribió teléfono parcial, es inválido
+ const valido=!!nombre&&tieneContacto&&(telOk||telVacio);
+ return{valido,contactable:tieneContacto,omitido:false};
 }
 function checkSubD(){
  let ok=false;
@@ -906,9 +926,10 @@ function checkSubD(){
  } else {
   const p=estadoPadre('Padre');
   const m=estadoPadre('Madre');
+  const ambosOmitidos=p.omitido&&m.omitido;
   const alMenosUnContacto=p.contactable||m.contactable;
-  ok=p.valido&&m.valido&&alMenosUnContacto;
-  hint.style.display=(p.valido&&m.valido&&!alMenosUnContacto)?'block':'none';
+  ok=p.valido&&m.valido&&!ambosOmitidos&&alMenosUnContacto;
+  hint.style.display=(p.valido&&m.valido&&!ok)?'block':'none';
  }
  document.getElementById('btnSubD').disabled=!ok;
 }
@@ -919,13 +940,12 @@ function checkSubD(){
 function contactoTexto(quien){
  if(document.getElementById('sinDatos'+quien).checked)return'Sin datos';
  const n=document.getElementById('nombre'+quien).value;
- const sinTel=document.getElementById('sinTel'+quien).checked;
+ if(document.getElementById('sinContacto'+quien).checked)return n+' · (sin contacto)';
  const tel=document.getElementById('tel'+quien).value;
  const email=document.getElementById('email'+quien).value.trim();
  let parts=[n];
- if(!sinTel&&tel)parts.push(tel);
+ if(tel)parts.push(tel);
  if(email)parts.push(email);
- if(sinTel&&!email)parts.push('(sin contacto)');
  return parts.join(' · ');
 }
 function fillReview(){
@@ -1029,7 +1049,8 @@ function reiniciar(){
  document.getElementById('btnEnviar').disabled=false;
  ['nombre','apPat','apMat','curp','promedio','calle','colonia','cp','nombrePadre','telPadre','emailPadre','nombreMadre','telMadre','emailMadre','telAlumno','emailAlumno','procedenciaOtra','consultaFolio'].forEach(id=>{const el=document.getElementById(id);if(el){el.value='';el.disabled=false;}});
  ['fnacDia','fnacMes','fnacAnio','sexo','grado','turno','procedenciaSelect','tipoInscripcion'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
- ['sinDatosPadre','sinTelPadre','sinDatosMadre','sinTelMadre'].forEach(id=>{const el=document.getElementById(id);el.checked=false;el.disabled=false;});
+ ['sinDatosPadre','sinContactoPadre','sinDatosMadre','sinContactoMadre'].forEach(id=>{const el=document.getElementById(id);el.checked=false;});
+ ['bloquePadre','contactoPadre','bloqueMadre','contactoMadre'].forEach(id=>{document.getElementById(id).classList.remove('collapsed');});
  document.getElementById('procedenciaOtraWrap').style.display='none';
  document.getElementById('grado').disabled=false;
  document.getElementById('gradoHint').style.display='none';
@@ -1241,23 +1262,34 @@ async function cargarRegistros(){
  const {data}=await sb.from('registros').select('*').order('created_at',{ascending:false});
  registros=data||[];
  const fe=document.getElementById('filtroEscuela');
- const valorActual=fe.value;
- const unicas=[...new Set(registros.map(r=>r.escuela))];
+ const vE=fe.value;
  fe.innerHTML='<option value="">Todas las escuelas</option>';
- unicas.forEach(e=>{const o=document.createElement('option');o.textContent=e;fe.appendChild(o);});
- fe.value=valorActual;
+ [...new Set(registros.map(r=>r.escuela))].forEach(e=>{const o=document.createElement('option');o.textContent=e;fe.appendChild(o);});
+ fe.value=vE;
+ const fg=document.getElementById('filtroGrado');
+ const vG=fg.value;
+ fg.innerHTML='<option value="">Todos los grados</option>';
+ [...new Set(registros.map(r=>r.grado))].sort().forEach(g=>{const o=document.createElement('option');o.textContent=g;fg.appendChild(o);});
+ fg.value=vG;
  renderRegistros();
+}
+
+function getFiltrados(){
+ const q=(document.getElementById('buscarReg').value||'').toLowerCase();
+ const fEsc=document.getElementById('filtroEscuela').value;
+ const fNiv=document.getElementById('filtroNivel').value;
+ const fGra=document.getElementById('filtroGrado').value;
+ const fEst=document.getElementById('filtroEstado').value;
+ return registros.filter(r=>
+  (r.folio.toLowerCase().includes(q)||r.nombre.toLowerCase().includes(q))&&
+  (!fEsc||r.escuela===fEsc)&&(!fNiv||r.nivel===fNiv)&&
+  (!fGra||r.grado===fGra)&&(!fEst||(r.estado||'Pendiente')===fEst)
+ );
 }
 
 function renderRegistros(){
  const lista=document.getElementById('dir-registros-lista');
- const q=(document.getElementById('buscarReg').value||'').toLowerCase();
- const fEsc=document.getElementById('filtroEscuela').value;
- const fNiv=document.getElementById('filtroNivel').value;
- const filtrados=registros.filter(r=>
-  (r.folio.toLowerCase().includes(q)||r.nombre.toLowerCase().includes(q))&&
-  (!fEsc||r.escuela===fEsc)&&(!fNiv||r.nivel===fNiv)
- );
+ const filtrados=getFiltrados();
  if(filtrados.length===0){lista.innerHTML='<p style="font-size:13px;color:#9DAABF;text-align:center;padding:10px 0;">Sin registros que coincidan.</p>';return;}
  lista.innerHTML='';
  filtrados.forEach(r=>{
@@ -1280,11 +1312,11 @@ function renderRegistros(){
     '</div>'+
    '</div>'+
    '<div class="reg-actions">'+
-    '<button class="btn-sm btn-sm-blue" onclick="abrirEdit('+idx+')">✎ Editar</button>'+
-    '<button class="btn-sm '+(r.foto_habilitada?'btn-sm-orange':'btn-sm-green')+'" onclick="toggleCambios('+idx+')">'+(r.foto_habilitada?'Cerrar cambios':'Habilitar cambios')+'</button>'+
-    '<button class="btn-sm btn-sm-blue" onclick="cicloEstado('+idx+')">Estado ↻</button>'+
-    '<button class="btn-sm btn-sm-green" onclick="subirFotoDirector('+idx+')">📷</button>'+
-    '<button class="btn-sm btn-sm-green" onclick="exportarUno('+idx+')">⬇</button>'+
+    '<button class="btn-sm btn-sm-blue" title="Editar registro" onclick="abrirEdit('+idx+')">✎</button>'+
+    '<button class="btn-sm '+(r.foto_habilitada?'btn-sm-orange':'btn-sm-green')+'" title="'+(r.foto_habilitada?'Cerrar ventana de cambios':'Habilitar cambios al solicitante')+'" onclick="toggleCambios('+idx+')">'+(r.foto_habilitada?'🔒':'🔓')+'</button>'+
+    '<button class="btn-sm btn-sm-blue" title="Cambiar estado (Pendiente → Aceptado → Rechazado)" onclick="cicloEstado('+idx+')">↻</button>'+
+    '<button class="btn-sm btn-sm-green" title="Subir foto" onclick="subirFotoDirector('+idx+')">📷</button>'+
+    '<button class="btn-sm btn-sm-green" title="Exportar CSV individual" onclick="exportarUno('+idx+')">⬇</button>'+
    '</div>';
   lista.appendChild(div);
  });
@@ -1407,24 +1439,28 @@ function descargarCSV(contenido,nombre){
  a.href=url;a.download=nombre;a.click();URL.revokeObjectURL(url);
 }
 function exportarUno(idx){descargarCSV(toCSV(registros[idx]),registros[idx].folio+'.csv');}
-async function exportarTodos(){
- showLoading('Preparando exportación...');
- const {data}=await sb.from('registros').select('*').order('created_at',{ascending:true});
- hideLoading();
- if(!data||data.length===0){showToast('Sin registros aún');return;}
- descargarCSV(toCSV(data),'preinscripciones_2026.csv');
+function exportarFiltrados(){
+ const filtrados=getFiltrados();
+ if(filtrados.length===0){showToast('Sin registros que coincidan con los filtros');return;}
+ const fEsc=document.getElementById('filtroEscuela').value;
+ const fGra=document.getElementById('filtroGrado').value;
+ let nombre='preinscripciones';
+ if(fEsc)nombre+='_'+fEsc.replace(/[^a-zA-Z0-9]/g,'-');
+ if(fGra)nombre+='_'+fGra.replace(/[^a-zA-Z0-9°]/g,'-');
+ descargarCSV(toCSV(filtrados),nombre+'.csv');
+ showToast(filtrados.length+' registros exportados ✓');
 }
 
 // ═══════════════════════════════════════════════
-// FOTOS: EXPORTAR ZIP / IMPORTAR MASIVO
+// FOTOS: EXPORTAR ZIP (FILTRADO) / IMPORTAR MASIVO
 // ═══════════════════════════════════════════════
 async function exportarFotosZip(){
- showLoading('Recopilando fotos...');
- const {data}=await sb.from('registros').select('folio,foto_url').not('foto_url','is',null);
- if(!data||data.length===0){hideLoading();showToast('No hay fotos registradas aún');return;}
+ const conFoto=getFiltrados().filter(r=>r.foto_url);
+ if(conFoto.length===0){showToast('No hay fotos en los registros filtrados');return;}
+ showLoading('Recopilando '+conFoto.length+' fotos...');
  const zip=new JSZip();
  let n=0;
- for(const r of data){
+ for(const r of conFoto){
   try{
    const resp=await fetch(r.foto_url);
    if(!resp.ok)continue;
