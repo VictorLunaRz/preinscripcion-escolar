@@ -6,6 +6,8 @@
 <title>Preinscripción Escolar</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 html,body{height:100%;}
@@ -82,8 +84,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .sindato-row{display:flex;align-items:center;gap:8px;flex-shrink:0;padding:1px 0;}
 .sindato-row input{width:15px;height:15px;accent-color:#C2620A;cursor:pointer;flex-shrink:0;}
 .sindato-row label{font-size:12px;color:#C2620A;cursor:pointer;font-weight:500;}
-.collapsible{display:flex;flex-direction:column;gap:9px;overflow:hidden;max-height:600px;opacity:1;transition:max-height .35s ease,opacity .25s ease;}
-.collapsible.collapsed{max-height:0;opacity:0;pointer-events:none;}
+.collapsible{display:flex;flex-direction:column;gap:9px;overflow:hidden;max-height:600px;opacity:1;transition:max-height .35s ease,opacity .25s ease,margin .25s ease;}
+.collapsible.collapsed{max-height:0;opacity:0;pointer-events:none;margin:0;gap:0;}
 .review-section{background:#fff;border-radius:13px;border:1px solid #E4EAF3;overflow:hidden;flex-shrink:0;}
 .review-section-header{background:#F0F4FA;padding:8px 13px;font-size:10px;font-weight:700;color:#0D4F8C;text-transform:uppercase;letter-spacing:0.8px;border-bottom:1px solid #E4EAF3;}
 .review-row{display:flex;justify-content:space-between;align-items:flex-start;padding:8px 13px;border-bottom:1px solid #F5F7FA;}
@@ -157,6 +159,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .btn-csv{background:#F0F9F0;color:#1A7A4A;border:1.5px solid #A8D5B5;border-radius:11px;padding:11px;font-size:13px;font-weight:700;cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center;gap:7px;flex-shrink:0;}
 .filtros-row{display:grid;grid-template-columns:1fr 1fr;gap:7px;flex-shrink:0;}
 .filtros-row .form-select{font-size:12.5px;padding:8px 10px;padding-right:28px;}
+.panel-toggle{display:flex;align-items:center;justify-content:space-between;padding:7px 11px;border-radius:9px;border:1.5px solid #D5DCE8;background:#F8FAFB;font-size:12px;font-weight:700;color:#4B5A70;cursor:pointer;width:100%;gap:8px;}
+.panel-toggle:hover{background:#EAF3FF;border-color:#B8CCE8;color:#0D4F8C;}
+.panel-toggle .toggle-arrow{font-size:10px;color:#9DAABF;transition:transform .25s;}
+.panel-toggle.open .toggle-arrow{transform:rotate(180deg);}
+.export-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+.btn-export{padding:8px 6px;border-radius:9px;font-size:11.5px;font-weight:700;cursor:pointer;border:none;display:flex;align-items:center;justify-content:center;gap:5px;width:100%;transition:transform .12s,opacity .2s;}
+.btn-export:active{transform:scale(.96);}
+.btn-exp-green{background:#F0FFF4;color:#1A7A4A;border:1.5px solid #A8D5B5;}
+.btn-exp-blue{background:#EAF3FF;color:#0D4F8C;border:1.5px solid #B8CCE8;}
+.btn-exp-orange{background:#FFF7ED;color:#C2620A;border:1.5px solid #F0C9A0;}
+.btn-exp-full{grid-column:1/-1;}
 .foto-viewer{position:absolute;inset:0;background:rgba(0,0,0,0.85);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px;border-radius:36px;cursor:pointer;}
 .foto-viewer.hidden{display:none;}
 .foto-viewer img{max-width:100%;max-height:80%;border-radius:14px;}
@@ -470,6 +483,10 @@ body{overflow:hidden;}
     <span class="ib-icon">ⓘ</span>
     <p>Con tu folio podrás consultar tu registro desde la pantalla principal. La selección considera promedio y proximidad al plantel.</p>
    </div>
+   <div style="display:flex;gap:9px;flex-shrink:0;">
+    <button class="btn-secondary" onclick="copiarFolio()" style="flex:1;">📋 Copiar folio</button>
+    <button class="btn-primary" onclick="descargarComprobante()" style="flex:1;">📄 Comprobante</button>
+   </div>
    <button class="btn-secondary" onclick="reiniciar()" style="margin-top:auto;">Volver al inicio</button>
   </div>
 
@@ -541,8 +558,9 @@ body{overflow:hidden;}
      </div>
      <div class="dir-section" id="tab-registros">
       <div class="form-group"><label class="form-label">Buscar por folio o nombre</label><input class="form-input" id="buscarReg" type="text" placeholder="PRE-2026-..." oninput="renderRegistros()"></div>
-      <button class="btn-secondary" id="toggleFiltrosBtn" onclick="toggleFiltros()" style="padding:8px;font-size:12px;">⚙ Filtros y exportación ▾</button>
+      <button class="btn-secondary" id="toggleFiltrosBtn" onclick="cicloFiltros()" style="padding:9px;font-size:12.5px;">⚙ Filtros y exportación ▾</button>
       <div class="collapsible collapsed" id="filtrosWrap">
+       <p style="font-size:10px;font-weight:700;color:#9DAABF;text-transform:uppercase;letter-spacing:0.6px;margin:2px 0 -2px;">Filtrar registros</p>
        <div class="filtros-row">
         <select class="form-select" id="filtroEscuela" onchange="renderRegistros()"><option value="">Todas las escuelas</option></select>
         <select class="form-select" id="filtroNivel" onchange="renderRegistros()"><option value="">Todos los niveles</option><option>Preparatoria</option><option>Secundaria</option></select>
@@ -551,8 +569,12 @@ body{overflow:hidden;}
         <select class="form-select" id="filtroGrado" onchange="renderRegistros()"><option value="">Todos los grados</option></select>
         <select class="form-select" id="filtroEstado" onchange="renderRegistros()"><option value="">Todos los estados</option><option>Pendiente</option><option>Aceptado</option><option>Rechazado</option></select>
        </div>
+      </div>
+      <div class="collapsible collapsed" id="exportWrap">
+       <p style="font-size:10px;font-weight:700;color:#9DAABF;text-transform:uppercase;letter-spacing:0.6px;margin:6px 0 -2px;">Exportar e importar (respeta los filtros)</p>
+       <button class="btn-csv" onclick="exportarXlsxFotos()" style="padding:11px;font-size:12.5px;">📸 Exportar Excel con fotos</button>
        <div class="filtros-row">
-        <button class="btn-csv" onclick="exportarFiltrados()" style="padding:9px;font-size:12px;">⬇ CSV filtrado</button>
+        <button class="btn-csv" onclick="exportarXlsx()" style="padding:9px;font-size:12px;">📊 Excel (datos)</button>
         <button class="btn-csv" onclick="exportarFotosZip()" style="padding:9px;font-size:12px;">🖼 Fotos (ZIP)</button>
        </div>
        <button class="btn-csv" onclick="importarFotos()" style="padding:9px;font-size:12px;">📁 Importar fotos (nombre = folio)</button>
@@ -636,7 +658,7 @@ const PREPARATORIAS_ENSENADA = [
 // ═══════════════════════════════════════════════
 let currentScreen=0,tipoSelected=0,currentSub='A',escuelaSeleccionada=null;
 let registros=[],dirAuthed=false,editIdx=null,privacyScrolled=false,consultaReg=null;
-let escuelasActivas=[],cpColonias=[];
+let escuelasActivas=[],cpColonias=[],ultimoRegistro=null;
 
 const MESES=['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 const HEADERS_CFG={
@@ -1237,12 +1259,96 @@ async function enviar(){
   return;
  }
  document.getElementById('folioNum').textContent=folio;
+ ultimoRegistro=reg;
  go(6);
 }
 
 // ═══════════════════════════════════════════════
-// REINICIAR
+// COPIAR FOLIO / COMPROBANTE PDF
 // ═══════════════════════════════════════════════
+function copiarFolio(){
+ const folio=document.getElementById('folioNum').textContent;
+ if(navigator.clipboard&&navigator.clipboard.writeText){
+  navigator.clipboard.writeText(folio).then(()=>showToast('Folio copiado ✓')).catch(()=>copiarFolioFallback(folio));
+ } else {copiarFolioFallback(folio);}
+}
+function copiarFolioFallback(folio){
+ const ta=document.createElement('textarea');
+ ta.value=folio;ta.style.position='fixed';ta.style.opacity='0';
+ document.body.appendChild(ta);ta.focus();ta.select();
+ try{document.execCommand('copy');showToast('Folio copiado ✓');}catch(e){showToast('Copia manual: '+folio,4000);}
+ document.body.removeChild(ta);
+}
+
+function descargarComprobante(){
+ const r=ultimoRegistro;
+ if(!r){showToast('No hay datos del registro');return;}
+ const {jsPDF}=window.jspdf;
+ const doc=new jsPDF({unit:'mm',format:'a4'});
+ const W=210;
+ // Encabezado
+ doc.setFillColor(13,79,140);
+ doc.rect(0,0,W,38,'F');
+ doc.setTextColor(255,255,255);
+ doc.setFont('helvetica','bold');doc.setFontSize(17);
+ doc.text('Comprobante de Preinscripción',W/2,17,{align:'center'});
+ doc.setFont('helvetica','normal');doc.setFontSize(10);
+ doc.text('Ciclo escolar 2026 – 2027',W/2,26,{align:'center'});
+ doc.setFontSize(8);
+ doc.text(r.escuela||'',W/2,33,{align:'center'});
+ // Folio destacado
+ doc.setFillColor(234,243,255);
+ doc.roundRect(20,48,W-40,26,3,3,'F');
+ doc.setTextColor(74,159,224);
+ doc.setFont('helvetica','bold');doc.setFontSize(8);
+ doc.text('NÚMERO DE FOLIO',W/2,57,{align:'center'});
+ doc.setTextColor(13,79,140);
+ doc.setFontSize(22);
+ doc.text(r.folio,W/2,68,{align:'center'});
+ // Datos del registro
+ let y=88;
+ doc.setTextColor(13,31,53);
+ doc.setFont('helvetica','bold');doc.setFontSize(12);
+ doc.text('Datos del registro',20,y);
+ doc.setDrawColor(200,220,245);doc.setLineWidth(0.4);
+ doc.line(20,y+2,W-20,y+2);
+ y+=10;
+ const filas=[
+  ['Alumno',r.nombre||'—'],
+  ['CURP',r.curp||'—'],
+  ['Plantel',r.escuela||'—'],
+  ['Nivel',r.nivel||'—'],
+  ['Grado a cursar',r.grado||'—'],
+  ['Tipo de inscripción',r.tipo_inscripcion||'—'],
+  ['Fecha de registro',r.fecha||'—'],
+  ['Estado',(r.estado||'Pendiente')+' (en revisión)'],
+ ];
+ doc.setFontSize(10);
+ filas.forEach(([k,v])=>{
+  doc.setFont('helvetica','normal');doc.setTextColor(110,122,146);
+  doc.text(k,22,y);
+  doc.setFont('helvetica','bold');doc.setTextColor(13,31,53);
+  const lines=doc.splitTextToSize(String(v),110);
+  doc.text(lines,90,y);
+  y+=Math.max(8,lines.length*6);
+ });
+ // Nota / instrucciones
+ y+=6;
+ doc.setFillColor(240,247,255);
+ doc.roundRect(20,y,W-40,34,3,3,'F');
+ doc.setTextColor(42,79,122);
+ doc.setFont('helvetica','bold');doc.setFontSize(9.5);
+ doc.text('Conserve este comprobante',26,y+9);
+ doc.setFont('helvetica','normal');doc.setFontSize(9);
+ const nota=doc.splitTextToSize('Con su número de folio podrá consultar el estado de su solicitud en cualquier momento desde la aplicación, en la opción "Consultar mi registro". El plantel se pondrá en contacto por los datos registrados para confirmar el resultado.',W-52);
+ doc.text(nota,26,y+16);
+ // Pie
+ doc.setTextColor(157,170,191);
+ doc.setFontSize(7.5);
+ doc.text('Documento generado automáticamente al completar la preinscripción. No requiere firma ni sello.',W/2,288,{align:'center'});
+ doc.save('Comprobante_'+r.folio+'.pdf');
+ showToast('Comprobante descargado ✓');
+}
 function reiniciar(){
  tipoSelected=0;escuelaSeleccionada=null;
  [1,2,3].forEach(i=>document.getElementById('t'+i).classList.remove('selected'));
@@ -1415,12 +1521,26 @@ function logoutDir(){
  document.getElementById('dirLogin').style.display='flex';
  document.getElementById('dirPanel').style.display='none';
 }
-function toggleFiltros(){
- const wrap=document.getElementById('filtrosWrap');
+// Estados: 0=cerrado, 1=solo filtros, 2=filtros+exportación
+let estadoFiltros=0;
+function cicloFiltros(){
+ estadoFiltros=(estadoFiltros+1)%3;
+ const filtros=document.getElementById('filtrosWrap');
+ const exportar=document.getElementById('exportWrap');
  const btn=document.getElementById('toggleFiltrosBtn');
- const abierto=!wrap.classList.contains('collapsed');
- wrap.classList.toggle('collapsed',abierto);
- btn.textContent=abierto?'⚙ Filtros y exportación ▾':'⚙ Filtros y exportación ▴';
+ if(estadoFiltros===0){
+  filtros.classList.add('collapsed');
+  exportar.classList.add('collapsed');
+  btn.textContent='⚙ Filtros y exportación ▾';
+ } else if(estadoFiltros===1){
+  filtros.classList.remove('collapsed');
+  exportar.classList.add('collapsed');
+  btn.textContent='⬇ Ver también exportación ▾';
+ } else {
+  filtros.classList.remove('collapsed');
+  exportar.classList.remove('collapsed');
+  btn.textContent='▴ Ocultar todo';
+ }
 }
 function dirTab(tab){
  document.querySelectorAll('.dir-tab').forEach((b,i)=>{b.classList.toggle('active',['stats','escuelas','registros'][i]===tab);});
@@ -1636,30 +1756,116 @@ async function cargarStats(){
  } else {document.getElementById('st-prom').textContent='—';}
 }
 
+// ═══════════════════════════════════════════════
+// EXPORTACIÓN — columnas y utilidades
+// ═══════════════════════════════════════════════
+const COLS_EXPORT=[
+ ['folio','Folio'],['fecha','Fecha'],['estado','Estado'],['escuela','Escuela'],['nivel','Nivel'],
+ ['nombre','Nombre'],['fecha_nac','Fecha nac.'],['sexo','Sexo'],['curp','CURP'],['grado','Grado'],
+ ['tipo_inscripcion','Tipo inscripción'],['procedencia','Procedencia'],['promedio','Promedio'],['turno','Turno'],
+ ['domicilio','Domicilio'],['padre','Padre'],['tel_padre','Tel. padre'],['email_padre','Correo padre'],
+ ['madre','Madre'],['tel_madre','Tel. madre'],['email_madre','Correo madre'],
+ ['tel_alumno','Tel. alumno'],['email','Correo alumno'],['tipo_solicitante','Registrado por'],
+];
+function nombreArchivo(base){
+ const fEsc=document.getElementById('filtroEscuela').value;
+ const fGra=document.getElementById('filtroGrado').value;
+ const fEst=document.getElementById('filtroEstado').value;
+ let n=base;
+ if(fEsc)n+='_'+fEsc.replace(/[^a-zA-Z0-9]/g,'-');
+ if(fGra)n+='_'+fGra.replace(/[^a-zA-Z0-9°]/g,'-');
+ if(fEst)n+='_'+fEst;
+ return n;
+}
+
+// CSV individual (botón ⬇ de cada card) — se mantiene ligero
 function toCSV(datos){
- const cols=['folio','fecha','estado','escuela','nivel','nombre','fecha_nac','sexo','curp','grado','tipo_inscripcion','procedencia','promedio','turno','domicilio','padre','tel_padre','email_padre','madre','tel_madre','email_madre','tel_alumno','email','tipo_solicitante'];
- const header=cols.join(',');
+ const cols=COLS_EXPORT.map(c=>c[0]);
+ const header=COLS_EXPORT.map(c=>c[1]).join(',');
  const rows=Array.isArray(datos)?datos:[datos];
  const lines=rows.map(r=>cols.map(c=>'"'+(r[c]??'').toString().replace(/"/g,'""')+'"').join(','));
  return[header,...lines].join('\n');
 }
-function descargarCSV(contenido,nombre){
- const blob=new Blob(['\uFEFF'+contenido],{type:'text/csv;charset=utf-8'});
+function descargarBlob(blob,nombre){
  const url=URL.createObjectURL(blob);
  const a=document.createElement('a');
  a.href=url;a.download=nombre;a.click();URL.revokeObjectURL(url);
 }
-function exportarUno(idx){descargarCSV(toCSV(registros[idx]),registros[idx].folio+'.csv');}
-function exportarFiltrados(){
+function exportarUno(idx){
+ const blob=new Blob(['\uFEFF'+toCSV(registros[idx])],{type:'text/csv;charset=utf-8'});
+ descargarBlob(blob,registros[idx].folio+'.csv');
+}
+
+// ═══════════════════════════════════════════════
+// EXPORTAR EXCEL (solo datos) — liviano e instantáneo
+// ═══════════════════════════════════════════════
+async function exportarXlsx(){
  const filtrados=getFiltrados();
  if(filtrados.length===0){showToast('Sin registros que coincidan con los filtros');return;}
- const fEsc=document.getElementById('filtroEscuela').value;
- const fGra=document.getElementById('filtroGrado').value;
- let nombre='preinscripciones';
- if(fEsc)nombre+='_'+fEsc.replace(/[^a-zA-Z0-9]/g,'-');
- if(fGra)nombre+='_'+fGra.replace(/[^a-zA-Z0-9°]/g,'-');
- descargarCSV(toCSV(filtrados),nombre+'.csv');
+ showLoading('Generando Excel...');
+ const wb=new ExcelJS.Workbook();
+ const ws=wb.addWorksheet('Preinscripciones');
+ ws.columns=COLS_EXPORT.map(c=>({header:c[1],key:c[0],width:Math.max(12,c[1].length+4)}));
+ ws.getRow(1).font={bold:true,color:{argb:'FFFFFFFF'}};
+ ws.getRow(1).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF0D4F8C'}};
+ ws.getRow(1).alignment={vertical:'middle'};
+ filtrados.forEach(r=>{
+  const fila={};
+  COLS_EXPORT.forEach(c=>fila[c[0]]=r[c[0]]??'');
+  ws.addRow(fila);
+ });
+ ws.autoFilter={from:'A1',to:{row:1,column:COLS_EXPORT.length}};
+ ws.views=[{state:'frozen',ySplit:1}];
+ const buf=await wb.xlsx.writeBuffer();
+ hideLoading();
+ descargarBlob(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),nombreArchivo('preinscripciones')+'.xlsx');
  showToast(filtrados.length+' registros exportados ✓');
+}
+
+// ═══════════════════════════════════════════════
+// EXPORTAR EXCEL CON FOTOS (principal) — incrusta imágenes
+// ═══════════════════════════════════════════════
+async function exportarXlsxFotos(){
+ const filtrados=getFiltrados();
+ if(filtrados.length===0){showToast('Sin registros que coincidan con los filtros');return;}
+ const wb=new ExcelJS.Workbook();
+ const ws=wb.addWorksheet('Preinscripciones');
+ // Columna de foto al inicio + resto de datos
+ ws.columns=[{header:'Foto',key:'foto',width:14},...COLS_EXPORT.map(c=>({header:c[1],key:c[0],width:Math.max(12,c[1].length+4)}))];
+ ws.getRow(1).font={bold:true,color:{argb:'FFFFFFFF'}};
+ ws.getRow(1).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF0D4F8C'}};
+ ws.getRow(1).alignment={vertical:'middle'};
+ ws.views=[{state:'frozen',ySplit:1}];
+ let conFoto=0;
+ for(let i=0;i<filtrados.length;i++){
+  const r=filtrados[i];
+  showLoading('Procesando '+(i+1)+' de '+filtrados.length+'...');
+  const fila={foto:''};
+  COLS_EXPORT.forEach(c=>fila[c[0]]=r[c[0]]??'');
+  const row=ws.addRow(fila);
+  const rowNum=row.number;
+  if(r.foto_url){
+   try{
+    const resp=await fetch(r.foto_url);
+    if(resp.ok){
+     const buf=await resp.arrayBuffer();
+     let ext=(r.foto_url.split('.').pop()||'jpeg').split('?')[0].toLowerCase();
+     if(ext==='jpg')ext='jpeg';
+     if(!['jpeg','png','gif'].includes(ext))ext='jpeg';
+     const imgId=wb.addImage({buffer:buf,extension:ext});
+     ws.getRow(rowNum).height=60;
+     ws.addImage(imgId,{tl:{col:0.1,row:rowNum-0.9},ext:{width:70,height:70}});
+     conFoto++;
+    }
+   }catch(e){}
+  }
+ }
+ ws.autoFilter={from:'B1',to:{row:1,column:COLS_EXPORT.length+1}};
+ showLoading('Generando archivo Excel...');
+ const buf=await wb.xlsx.writeBuffer();
+ hideLoading();
+ descargarBlob(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),nombreArchivo('preinscripciones_con_fotos')+'.xlsx');
+ showToast(filtrados.length+' registros · '+conFoto+' con foto ✓',4000);
 }
 
 // ═══════════════════════════════════════════════
