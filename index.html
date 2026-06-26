@@ -596,6 +596,7 @@ body{overflow:hidden;}
         <button class="btn-csv" onclick="exportarFotosZip()" style="padding:9px;font-size:11.5px;">🖼 Fotos (ZIP)</button>
         <button class="btn-csv" onclick="importarFotos()" style="padding:9px;font-size:11.5px;">📁 Importar fotos</button>
        </div>
+       <button class="btn-secondary" onclick="abrirCalibrarRecorte()" style="padding:8px;font-size:11.5px;">✂ Ajustar recorte de rostro</button>
       </div>
       <div id="dir-registros-lista" style="display:flex;flex-direction:column;gap:7px;"></div>
      </div>
@@ -612,6 +613,42 @@ body{overflow:hidden;}
     <button class="dir-close" onclick="cerrarEdit()">✕</button>
    </div>
    <div class="edit-body" id="editBody"></div>
+  </div>
+ </div>
+
+ <div class="edit-overlay hidden" id="recorteOverlay">
+  <div class="edit-modal">
+   <div class="edit-modal-header">
+    <h3>Ajustar recorte de rostro</h3>
+    <button class="dir-close" onclick="cerrarCalibrarRecorte()">✕</button>
+   </div>
+   <div class="edit-body">
+    <p style="font-size:12px;color:#6B7A92;line-height:1.5;">Sube una foto de ejemplo y ajusta el cuadro hasta que encuadre bien el rostro. La misma configuración se aplica a todas las fotos al importarlas.</p>
+    <button class="btn-secondary" onclick="cargarMuestraRecorte()" style="font-size:12.5px;">Elegir foto de ejemplo</button>
+    <div id="recortePreviewWrap" style="display:none;flex-direction:column;gap:10px;">
+     <div style="position:relative;width:100%;background:#0D1F35;border-radius:10px;overflow:hidden;display:flex;align-items:center;justify-content:center;min-height:180px;">
+      <img id="recorteImg" style="max-width:100%;max-height:260px;display:block;" alt="Muestra">
+      <div id="recorteBox" style="position:absolute;border:2px solid #4A9FE0;box-shadow:0 0 0 9999px rgba(0,0,0,0.45);box-sizing:border-box;"></div>
+     </div>
+     <div style="display:flex;gap:14px;">
+      <div style="flex:1;">
+       <img id="recortePreviewResult" style="width:100%;border-radius:8px;border:1px solid #D5DCE8;" alt="Resultado">
+       <p style="font-size:10px;color:#9DAABF;text-align:center;margin-top:3px;">Resultado del recorte</p>
+      </div>
+     </div>
+     <div class="form-group"><label class="form-label">Posición vertical (rostro arriba ↔ abajo)</label>
+      <input type="range" id="rcY" min="15" max="60" value="34" oninput="actualizarRecortePreview()" style="width:100%;accent-color:#0D4F8C;"></div>
+     <div class="form-group"><label class="form-label">Posición horizontal</label>
+      <input type="range" id="rcX" min="30" max="70" value="50" oninput="actualizarRecortePreview()" style="width:100%;accent-color:#0D4F8C;"></div>
+     <div class="form-group"><label class="form-label">Acercamiento (zoom)</label>
+      <input type="range" id="rcZoom" min="35" max="90" value="62" oninput="actualizarRecortePreview()" style="width:100%;accent-color:#0D4F8C;"></div>
+    </div>
+    <div class="sindato-row"><input type="checkbox" id="rcActivo" checked onchange="actualizarRecortePreview()"><label for="rcActivo" style="color:#4B5A70;">Recortar las fotos al importar (desmarcar para subir originales)</label></div>
+    <div style="display:flex;gap:10px;margin-top:4px;">
+     <button class="btn-secondary" onclick="cerrarCalibrarRecorte()" style="flex:1;">Cancelar</button>
+     <button class="btn-primary" onclick="guardarRecorteCfg()" style="flex:2;">Guardar ajuste</button>
+    </div>
+   </div>
   </div>
  </div>
 
@@ -1497,16 +1534,130 @@ async function guardarEditUsuario(){
 // ═══════════════════════════════════════════════
 // FOTO GENÉRICA (nombre único = sin caché)
 // ═══════════════════════════════════════════════
+// ═══════════════════════════════════════════════
+// RECORTE DE ROSTRO (Nivel 1: recorte fijo configurable)
+// El director calibra una vez con sus fotos; se aplica igual a todas.
+// Parámetros guardados en memoria (se pueden ajustar desde el panel).
+// ═══════════════════════════════════════════════
+let recorteCfg={
+ activo:true,      // si false, sube la foto original sin recortar
+ centroX:0.50,     // posición horizontal del centro del recorte (0=izq, 1=der)
+ centroY:0.34,     // posición vertical del centro (0=arriba, 1=abajo) — rostro suele estar arriba
+ tamano:0.62,      // tamaño del cuadro como proporción del lado menor de la foto
+ salidaPx:600,     // resolución final del cuadro recortado (px por lado)
+};
+
+// Recorta un File de imagen a un cuadro según recorteCfg. Devuelve un Blob JPEG.
+function recortarImagen(file){
+ return new Promise((resolve,reject)=>{
+  if(!recorteCfg.activo){resolve(file);return;}
+  const img=new Image();
+  const url=URL.createObjectURL(file);
+  img.onload=()=>{
+   try{
+    const w=img.naturalWidth, h=img.naturalHeight;
+    const lado=Math.round(Math.min(w,h)*recorteCfg.tamano);
+    let cx=Math.round(w*recorteCfg.centroX);
+    let cy=Math.round(h*recorteCfg.centroY);
+    // Mantener el cuadro dentro de los límites
+    let x=Math.max(0,Math.min(w-lado,Math.round(cx-lado/2)));
+    let y=Math.max(0,Math.min(h-lado,Math.round(cy-lado/2)));
+    const out=recorteCfg.salidaPx;
+    const canvas=document.createElement('canvas');
+    canvas.width=out;canvas.height=out;
+    const ctx=canvas.getContext('2d');
+    ctx.imageSmoothingQuality='high';
+    ctx.drawImage(img,x,y,lado,lado,0,0,out,out);
+    URL.revokeObjectURL(url);
+    canvas.toBlob(b=>{b?resolve(b):reject(new Error('toBlob falló'));},'image/jpeg',0.92);
+   }catch(err){URL.revokeObjectURL(url);reject(err);}
+  };
+  img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error('No se pudo leer la imagen'));};
+  img.src=url;
+ });
+}
+
+// Sube un blob/archivo a Storage con reintento automático ante fallos de red.
+async function subirConReintento(path,blob,intentos=3){
+ for(let i=0;i<intentos;i++){
+  const {error}=await sb.storage.from('fotos-alumnos').upload(path,blob,{upsert:true});
+  if(!error)return null;
+  if(i<intentos-1)await new Promise(r=>setTimeout(r,400*(i+1)));
+  else return error;
+ }
+}
+
+// ── Panel de calibración del recorte ──
+let recorteMuestraImg=null;
+function abrirCalibrarRecorte(){
+ document.getElementById('rcActivo').checked=recorteCfg.activo;
+ document.getElementById('rcY').value=Math.round(recorteCfg.centroY*100);
+ document.getElementById('rcX').value=Math.round(recorteCfg.centroX*100);
+ document.getElementById('rcZoom').value=Math.round(recorteCfg.tamano*100);
+ document.getElementById('recorteOverlay').classList.remove('hidden');
+}
+function cerrarCalibrarRecorte(){document.getElementById('recorteOverlay').classList.add('hidden');}
+function cargarMuestraRecorte(){
+ const input=document.createElement('input');
+ input.type='file';input.accept='image/*';
+ input.onchange=e=>{
+  const file=e.target.files[0];if(!file)return;
+  const img=new Image();
+  img.onload=()=>{
+   recorteMuestraImg=img;
+   document.getElementById('recorteImg').src=img.src;
+   document.getElementById('recortePreviewWrap').style.display='flex';
+   setTimeout(actualizarRecortePreview,60);
+  };
+  img.src=URL.createObjectURL(file);
+ };
+ input.click();
+}
+function actualizarRecortePreview(){
+ if(!recorteMuestraImg)return;
+ const cy=+document.getElementById('rcY').value/100;
+ const cx=+document.getElementById('rcX').value/100;
+ const zoom=+document.getElementById('rcZoom').value/100;
+ // Dibujar el cuadro guía sobre la imagen mostrada
+ const imgEl=document.getElementById('recorteImg');
+ const box=document.getElementById('recorteBox');
+ const dispW=imgEl.clientWidth, dispH=imgEl.clientHeight;
+ const ladoDisp=Math.min(dispW,dispH)*zoom;
+ let bx=cx*dispW-ladoDisp/2, by=cy*dispH-ladoDisp/2;
+ bx=Math.max(0,Math.min(dispW-ladoDisp,bx));
+ by=Math.max(0,Math.min(dispH-ladoDisp,by));
+ box.style.width=ladoDisp+'px';box.style.height=ladoDisp+'px';
+ box.style.left=(imgEl.offsetLeft+bx)+'px';box.style.top=(imgEl.offsetTop+by)+'px';
+ // Generar el recorte real para vista previa
+ const w=recorteMuestraImg.naturalWidth,h=recorteMuestraImg.naturalHeight;
+ const lado=Math.round(Math.min(w,h)*zoom);
+ let x=Math.max(0,Math.min(w-lado,Math.round(w*cx-lado/2)));
+ let y=Math.max(0,Math.min(h-lado,Math.round(h*cy-lado/2)));
+ const c=document.createElement('canvas');c.width=300;c.height=300;
+ c.getContext('2d').drawImage(recorteMuestraImg,x,y,lado,lado,0,0,300,300);
+ document.getElementById('recortePreviewResult').src=c.toDataURL('image/jpeg',0.9);
+}
+function guardarRecorteCfg(){
+ recorteCfg.activo=document.getElementById('rcActivo').checked;
+ recorteCfg.centroY=+document.getElementById('rcY').value/100;
+ recorteCfg.centroX=+document.getElementById('rcX').value/100;
+ recorteCfg.tamano=+document.getElementById('rcZoom').value/100;
+ cerrarCalibrarRecorte();
+ showToast('Ajuste de recorte guardado ✓');
+}
+
 function subirFotoGenerico(reg,onDone){
  const input=document.createElement('input');
  input.type='file';input.accept='image/*';
  input.onchange=async e=>{
   const file=e.target.files[0];
   if(!file)return;
+  showLoading('Procesando foto...');
+  let blob=file;
+  try{blob=await recortarImagen(file);}catch(err){blob=file;}
   showLoading('Subiendo foto...');
-  const ext=(file.name.split('.').pop()||'jpg').toLowerCase();
-  const path=reg.folio+'_'+Date.now()+'.'+ext;
-  const {error:upErr}=await sb.storage.from('fotos-alumnos').upload(path,file);
+  const path=reg.folio+'_'+Date.now()+'.jpg';
+  const upErr=await subirConReintento(path,blob);
   if(upErr){hideLoading();showToast('Error al subir foto');return;}
   const {data:urlData}=sb.storage.from('fotos-alumnos').getPublicUrl(path);
   const foto_url=urlData.publicUrl;
@@ -1943,29 +2094,32 @@ function importarFotos(){
  input.onchange=async e=>{
   const files=[...e.target.files];
   if(!files.length)return;
-  showLoading('Importando '+files.length+' fotos...');
   let ok=0,sinMatch=0,errores=0;
-  for(const f of files){
-   // El nombre del archivo (sin extensión) debe ser el folio
+  const fallidas=[];
+  for(let i=0;i<files.length;i++){
+   const f=files[i];
+   showLoading('Procesando '+(i+1)+' de '+files.length+'...');
    const base=f.name.replace(/\.[^.]+$/,'').split('_')[0].trim().toUpperCase();
    const reg=registros.find(r=>r.folio.toUpperCase()===base);
    if(!reg){sinMatch++;continue;}
-   const ext=(f.name.split('.').pop()||'jpg').toLowerCase();
-   const path=reg.folio+'_'+Date.now()+'_'+Math.floor(Math.random()*1000)+'.'+ext;
-   const {error:upErr}=await sb.storage.from('fotos-alumnos').upload(path,f);
-   if(upErr){errores++;continue;}
+   let blob=f;
+   try{blob=await recortarImagen(f);}catch(err){blob=f;}
+   const path=reg.folio+'_'+Date.now()+'_'+Math.floor(Math.random()*1000)+'.jpg';
+   const upErr=await subirConReintento(path,blob);
+   if(upErr){errores++;fallidas.push(f.name);continue;}
    const {data:u}=sb.storage.from('fotos-alumnos').getPublicUrl(path);
    const {error:dbErr}=await sb.from('registros').update({foto_url:u.publicUrl}).eq('id',reg.id);
-   if(dbErr){errores++;continue;}
+   if(dbErr){errores++;fallidas.push(f.name);continue;}
    reg.foto_url=u.publicUrl;
    ok++;
   }
   hideLoading();
   renderRegistros();
   let msg=ok+' asignadas';
-  if(sinMatch)msg+=' · '+sinMatch+' sin folio coincidente';
+  if(sinMatch)msg+=' · '+sinMatch+' sin folio';
   if(errores)msg+=' · '+errores+' con error';
-  showToast(msg,4000);
+  showToast(msg,4500);
+  if(fallidas.length)console.warn('Fotos con error (reintenta importándolas de nuevo):',fallidas);
  };
  input.click();
 }
