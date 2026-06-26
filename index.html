@@ -652,6 +652,42 @@ body{overflow:hidden;}
   </div>
  </div>
 
+ <div class="edit-overlay hidden" id="camaraOverlay">
+  <div class="edit-modal" style="max-height:580px;">
+   <div class="edit-modal-header">
+    <h3 id="camaraTitle">Tomar foto</h3>
+    <button class="dir-close" onclick="cerrarCamara()">✕</button>
+   </div>
+   <div class="edit-body" style="gap:12px;">
+    <div style="position:relative;width:100%;background:#0D1F35;border-radius:12px;overflow:hidden;display:flex;align-items:center;justify-content:center;min-height:280px;">
+     <video id="camaraVideo" autoplay playsinline style="width:100%;max-height:340px;display:block;"></video>
+     <canvas id="camaraCanvas" style="display:none;"></canvas>
+     <img id="camaraFotoTomada" style="display:none;width:100%;max-height:340px;object-fit:contain;" alt="Foto tomada">
+     <div id="camaraGuia" style="position:absolute;border:2px dashed rgba(255,255,255,0.7);border-radius:8px;pointer-events:none;"></div>
+    </div>
+    <p id="camaraEstado" style="font-size:12px;color:#6B7A92;text-align:center;">Encuadra el rostro dentro del marco.</p>
+    <select class="form-select" id="camaraSelect" onchange="cambiarCamara()" style="display:none;font-size:12.5px;"></select>
+    <div id="camaraBotones" style="display:flex;gap:10px;">
+     <button class="btn-secondary" onclick="cerrarCamara()" style="flex:1;">Cancelar</button>
+     <button class="btn-primary" id="btnCapturar" onclick="capturarFoto()" style="flex:2;">📷 Tomar foto</button>
+    </div>
+    <div id="camaraBotonesConfirm" style="display:none;gap:10px;">
+     <button class="btn-secondary" onclick="repetirFoto()" style="flex:1;">↺ Repetir</button>
+     <button class="btn-primary" onclick="confirmarFoto()" style="flex:2;">✓ Usar esta foto</button>
+    </div>
+   </div>
+  </div>
+ </div>
+
+ <div class="edit-overlay hidden" id="opcionFotoOverlay">
+  <div style="background:#fff;border-radius:18px;width:100%;max-width:320px;padding:20px;display:flex;flex-direction:column;gap:12px;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+   <p style="font-size:15px;font-weight:700;color:#0D1F35;text-align:center;">¿Cómo quieres agregar la foto?</p>
+   <button class="btn-primary" id="btnOpCamara">📷 Tomar foto con la cámara</button>
+   <button class="btn-secondary" id="btnOpArchivo">🖼 Elegir archivo existente</button>
+   <button class="btn-secondary" onclick="document.getElementById('opcionFotoOverlay').classList.add('hidden')" style="border:none;color:#9DAABF;">Cancelar</button>
+  </div>
+ </div>
+
 </div><!-- /phone-wrap -->
 
 <script>
@@ -1646,27 +1682,143 @@ function guardarRecorteCfg(){
  showToast('Ajuste de recorte guardado ✓');
 }
 
+// ═══════════════════════════════════════════════
+// CÁMARA (celular o webcam de PC)
+// ═══════════════════════════════════════════════
+let camaraStream=null, camaraOnCapture=null, camaraBlob=null, camaraDevices=[], camaraDeviceId=null;
+
+async function abrirCamara(titulo,onCapture){
+ camaraOnCapture=onCapture;camaraBlob=null;
+ document.getElementById('camaraTitle').textContent=titulo||'Tomar foto';
+ document.getElementById('camaraOverlay').classList.remove('hidden');
+ document.getElementById('camaraVideo').style.display='block';
+ document.getElementById('camaraFotoTomada').style.display='none';
+ document.getElementById('camaraBotones').style.display='flex';
+ document.getElementById('camaraBotonesConfirm').style.display='none';
+ document.getElementById('camaraEstado').textContent='Iniciando cámara…';
+ try{
+  await iniciarStream();
+  // Listar cámaras disponibles (para elegir frontal/trasera o webcam)
+  const devices=await navigator.mediaDevices.enumerateDevices();
+  camaraDevices=devices.filter(d=>d.kind==='videoinput');
+  const sel=document.getElementById('camaraSelect');
+  if(camaraDevices.length>1){
+   sel.innerHTML='';
+   camaraDevices.forEach((d,i)=>{const o=document.createElement('option');o.value=d.deviceId;o.textContent=d.label||('Cámara '+(i+1));sel.appendChild(o);});
+   sel.style.display='block';
+  } else {sel.style.display='none';}
+  document.getElementById('camaraEstado').textContent='Encuadra el rostro dentro del marco.';
+  dibujarGuiaCamara();
+ }catch(err){
+  document.getElementById('camaraEstado').textContent='No se pudo acceder a la cámara. Revisa los permisos del navegador.';
+  document.getElementById('btnCapturar').disabled=true;
+ }
+}
+
+async function iniciarStream(){
+ if(camaraStream)camaraStream.getTracks().forEach(t=>t.stop());
+ const constraints={video:camaraDeviceId?{deviceId:{exact:camaraDeviceId}}:{facingMode:'user'},audio:false};
+ camaraStream=await navigator.mediaDevices.getUserMedia(constraints);
+ const v=document.getElementById('camaraVideo');
+ v.srcObject=camaraStream;
+ await v.play();
+}
+
+async function cambiarCamara(){
+ camaraDeviceId=document.getElementById('camaraSelect').value;
+ try{await iniciarStream();dibujarGuiaCamara();}catch(e){}
+}
+
+function dibujarGuiaCamara(){
+ // Cuadro guía centrado según la config de recorte, para que el director encuadre igual
+ const wrap=document.getElementById('camaraVideo');
+ setTimeout(()=>{
+  const w=wrap.clientWidth,h=wrap.clientHeight;
+  if(!w||!h)return;
+  const lado=Math.min(w,h)*recorteCfg.tamano;
+  const g=document.getElementById('camaraGuia');
+  g.style.width=lado+'px';g.style.height=lado+'px';
+  g.style.left=(wrap.offsetLeft+w*recorteCfg.centroX-lado/2)+'px';
+  g.style.top=(wrap.offsetTop+h*recorteCfg.centroY-lado/2)+'px';
+ },120);
+}
+
+function capturarFoto(){
+ const v=document.getElementById('camaraVideo');
+ const canvas=document.getElementById('camaraCanvas');
+ canvas.width=v.videoWidth;canvas.height=v.videoHeight;
+ canvas.getContext('2d').drawImage(v,0,0);
+ canvas.toBlob(b=>{
+  camaraBlob=b;
+  document.getElementById('camaraFotoTomada').src=URL.createObjectURL(b);
+  document.getElementById('camaraVideo').style.display='none';
+  document.getElementById('camaraFotoTomada').style.display='block';
+  document.getElementById('camaraGuia').style.display='none';
+  document.getElementById('camaraBotones').style.display='none';
+  document.getElementById('camaraBotonesConfirm').style.display='flex';
+  document.getElementById('camaraEstado').textContent='¿Se ve bien? Úsala o repite.';
+ },'image/jpeg',0.95);
+}
+
+function repetirFoto(){
+ camaraBlob=null;
+ document.getElementById('camaraVideo').style.display='block';
+ document.getElementById('camaraFotoTomada').style.display='none';
+ document.getElementById('camaraGuia').style.display='block';
+ document.getElementById('camaraBotones').style.display='flex';
+ document.getElementById('camaraBotonesConfirm').style.display='none';
+ document.getElementById('camaraEstado').textContent='Encuadra el rostro dentro del marco.';
+}
+
+function confirmarFoto(){
+ const blob=camaraBlob;
+ cerrarCamara();
+ if(blob&&camaraOnCapture)camaraOnCapture(blob);
+}
+
+function cerrarCamara(){
+ if(camaraStream){camaraStream.getTracks().forEach(t=>t.stop());camaraStream=null;}
+ document.getElementById('camaraGuia').style.display='block';
+ document.getElementById('btnCapturar').disabled=false;
+ document.getElementById('camaraOverlay').classList.add('hidden');
+}
+
+// Procesa un blob/file (recorta + sube) y actualiza el registro
+async function procesarYSubirFoto(reg,fuente,onDone){
+ showLoading('Procesando foto...');
+ let blob=fuente;
+ try{blob=await recortarImagen(fuente);}catch(err){blob=fuente;}
+ showLoading('Subiendo foto...');
+ const path=reg.folio+'_'+Date.now()+'.jpg';
+ const upErr=await subirConReintento(path,blob);
+ if(upErr){hideLoading();showToast('Error al subir foto');return;}
+ const {data:urlData}=sb.storage.from('fotos-alumnos').getPublicUrl(path);
+ const foto_url=urlData.publicUrl;
+ await sb.from('registros').update({foto_url}).eq('id',reg.id);
+ hideLoading();
+ showToast('Foto guardada ✓');
+ onDone(foto_url);
+}
+
+// Pregunta cámara o archivo, luego procesa
 function subirFotoGenerico(reg,onDone){
- const input=document.createElement('input');
- input.type='file';input.accept='image/*';
- input.onchange=async e=>{
-  const file=e.target.files[0];
-  if(!file)return;
-  showLoading('Procesando foto...');
-  let blob=file;
-  try{blob=await recortarImagen(file);}catch(err){blob=file;}
-  showLoading('Subiendo foto...');
-  const path=reg.folio+'_'+Date.now()+'.jpg';
-  const upErr=await subirConReintento(path,blob);
-  if(upErr){hideLoading();showToast('Error al subir foto');return;}
-  const {data:urlData}=sb.storage.from('fotos-alumnos').getPublicUrl(path);
-  const foto_url=urlData.publicUrl;
-  await sb.from('registros').update({foto_url}).eq('id',reg.id);
-  hideLoading();
-  showToast('Foto guardada ✓');
-  onDone(foto_url);
- };
- input.click();
+ mostrarOpcionFoto(
+  ()=>abrirCamara('Foto · '+reg.folio,blob=>procesarYSubirFoto(reg,blob,onDone)),
+  ()=>{
+   const input=document.createElement('input');
+   input.type='file';input.accept='image/*';
+   input.onchange=e=>{const file=e.target.files[0];if(file)procesarYSubirFoto(reg,file,onDone);};
+   input.click();
+  }
+ );
+}
+
+// Mini-selector cámara vs archivo (usa el toast-overlay simple)
+function mostrarOpcionFoto(onCamara,onArchivo){
+ const ov=document.getElementById('opcionFotoOverlay');
+ ov.classList.remove('hidden');
+ document.getElementById('btnOpCamara').onclick=()=>{ov.classList.add('hidden');onCamara();};
+ document.getElementById('btnOpArchivo').onclick=()=>{ov.classList.add('hidden');onArchivo();};
 }
 
 // ═══════════════════════════════════════════════
